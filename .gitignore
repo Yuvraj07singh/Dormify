@@ -1,0 +1,23 @@
+# ENV FILES
+.env
+.env.*
+server/.env
+client/.env
+
+# NODE MODULES
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# BUILD
+build/
+dist/
+
+# LOGS
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
