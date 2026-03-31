@@ -106,7 +106,7 @@ function Navbar() {
                             animate={{ width: "auto", opacity: 1, x: 0 }}
                             exit={{ width: 0, opacity: 0, x: -50 }}
                             transition={{ duration: 0.5, ease: "easeInOut" }}
-                            className="hidden md:flex items-center gap-1 overflow-hidden whitespace-nowrap"
+                            className={`hidden md:flex items-center gap-1 whitespace-nowrap ${moreMenuOpen ? 'overflow-visible' : 'overflow-hidden'}`}
                         >
                             {primaryLinks.map((link) => (
                                 <Link
