@@ -18,6 +18,7 @@ function Navbar() {
     const [mobileOpen, setMobileOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen] = useState(false);
     const [langMenuOpen, setLangMenuOpen] = useState(false);
+    const [moreMenuOpen, setMoreMenuOpen] = useState(false);
     const [navExpanded, setNavExpanded] = useState(true);
     const [winking, setWinking] = useState(false);
 
@@ -31,6 +32,7 @@ function Navbar() {
         setMobileOpen(false);
         setUserMenuOpen(false);
         setLangMenuOpen(false);
+        setMoreMenuOpen(false);
     }, [location]);
 
     const handleLogout = () => {
@@ -39,16 +41,24 @@ function Navbar() {
         navigate("/");
     };
 
-    const navLinks = [
+    // Primary links always visible in navbar
+    const primaryLinks = [
         { path: "/", label: t("home") },
         { path: "/listings", label: t("listings") },
-        { path: "/budget-analyzer", label: "💰 Budget" },
+        { path: "/budget-analyzer", label: "Budget" },
+    ];
+
+    // Secondary links in "More" dropdown
+    const secondaryLinks = [
         { path: "/pricing", label: "Pricing" },
         { path: "/compare", label: "Compare" },
         ...(user ? [{ path: "/chat", label: "Messages" }] : []),
         ...(user?.role === "landlord" ? [{ path: "/landlord-bookings", label: "Bookings" }] : []),
         ...(user?.role === "admin" ? [{ path: "/admin", label: "Admin" }] : []),
     ];
+
+    // All links for mobile menu
+    const allLinks = [...primaryLinks, ...secondaryLinks];
 
     const handleLogoClick = () => {
         setNavExpanded((prev) => !prev);
@@ -92,13 +102,13 @@ function Navbar() {
                 <AnimatePresence>
                     {navExpanded && (
                         <motion.div 
-                            initial={{ width: 0, opacity: 0, x: -30 }} // start eaten
-                            animate={{ width: "auto", opacity: 1, x: 0 }} // spit out
-                            exit={{ width: 0, opacity: 0, x: -50 }} // eat them
+                            initial={{ width: 0, opacity: 0, x: -30 }}
+                            animate={{ width: "auto", opacity: 1, x: 0 }}
+                            exit={{ width: 0, opacity: 0, x: -50 }}
                             transition={{ duration: 0.5, ease: "easeInOut" }}
-                            className="hidden md:flex items-center gap-2 overflow-hidden whitespace-nowrap"
+                            className="hidden md:flex items-center gap-1 overflow-hidden whitespace-nowrap"
                         >
-                            {navLinks.map((link) => (
+                            {primaryLinks.map((link) => (
                                 <Link
                                     key={link.path}
                                     to={link.path}
@@ -111,6 +121,50 @@ function Navbar() {
                                     {link.label}
                                 </Link>
                             ))}
+
+                            {/* More dropdown */}
+                            <div className="relative">
+                                <button
+                                    onClick={() => { setMoreMenuOpen(!moreMenuOpen); setUserMenuOpen(false); setLangMenuOpen(false); }}
+                                    className={`flex items-center gap-1 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                                        secondaryLinks.some(l => l.path === location.pathname)
+                                            ? "text-gray-900 dark:text-white bg-gray-100/50 dark:bg-white/5"
+                                            : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/5"
+                                    }`}
+                                >
+                                    More
+                                    <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${moreMenuOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                                <AnimatePresence>
+                                    {moreMenuOpen && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            exit={{ opacity: 0, y: 8, scale: 0.96 }}
+                                            transition={{ duration: 0.18 }}
+                                            className="absolute left-0 mt-2 w-44 rounded-2xl bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-700 shadow-2xl overflow-hidden z-50"
+                                        >
+                                            <div className="p-1.5">
+                                                {secondaryLinks.map((link) => (
+                                                    <Link
+                                                        key={link.path}
+                                                        to={link.path}
+                                                        className={`flex items-center px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                                                            location.pathname === link.path
+                                                                ? "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
+                                                                : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
+                                                        }`}
+                                                    >
+                                                        {link.label}
+                                                    </Link>
+                                                ))}
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
                         </motion.div>
                     )}
                 </AnimatePresence>
@@ -310,8 +364,8 @@ function Navbar() {
                         transition={{ duration: 0.3, ease: "easeInOut" }}
                         className="absolute top-full left-0 right-0 md:hidden bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-gray-200/50 dark:border-slate-700/50 shadow-2xl pointer-events-auto mt-2 mx-4 rounded-3xl overflow-hidden"
                     >
-                        <div className="p-4 space-y-2">
-                            {navLinks.map((link) => (
+                        <div className="p-4 space-y-1">
+                            {allLinks.map((link) => (
                                 <Link
                                     key={link.path}
                                     to={link.path}

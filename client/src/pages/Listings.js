@@ -31,6 +31,30 @@ function Listings() {
     const [sortBy, setSortBy] = useState("newest");
     const [viewMode, setViewMode] = useState("grid"); // grid | list
     const [filtersOpen, setFiltersOpen] = useState(false);
+    const [advancedOpen, setAdvancedOpen] = useState(false);
+
+    // Advanced filters
+    const [minBeds, setMinBeds] = useState(0);
+    const [minRating, setMinRating] = useState(0);
+    const [selectedAmenities, setSelectedAmenities] = useState([]);
+    const [proximityKm, setProximityKm] = useState(0); // 0 = any
+
+    const AMENITIES = [
+        { key: "WiFi", icon: "📶" },
+        { key: "AC", icon: "❄️" },
+        { key: "Parking", icon: "🚗" },
+        { key: "Gym", icon: "💪" },
+        { key: "Laundry", icon: "👕" },
+        { key: "CCTV", icon: "📹" },
+        { key: "Dining", icon: "🍽️" },
+        { key: "Study Room", icon: "📚" },
+    ];
+
+    const toggleAmenity = (key) => {
+        setSelectedAmenities(prev =>
+            prev.includes(key) ? prev.filter(a => a !== key) : [...prev, key]
+        );
+    };
 
     // Autocomplete state
     const [suggestions, setSuggestions] = useState([]);
@@ -146,7 +170,25 @@ function Listings() {
                 }
             }
 
-            // 3. Sort
+            // 3. Advanced Frontend Filters
+            if (minBeds > 0) allData = allData.filter(p => (p.bedrooms || 0) >= minBeds);
+            if (minRating > 0) allData = allData.filter(p => (p.averageRating || 0) >= minRating);
+            if (selectedAmenities.length > 0) {
+                allData = allData.filter(p => {
+                    const pAmenities = p.amenities || [];
+                    return selectedAmenities.every(a =>
+                        pAmenities.some(pa => pa.toLowerCase().includes(a.toLowerCase()))
+                    );
+                });
+            }
+            if (proximityKm > 0 && location) {
+                allData = allData.filter(p => {
+                    const d = getDistance(location.lat, location.lng, p.latitude, p.longitude);
+                    return d === null || d <= proximityKm;
+                });
+            }
+
+            // 4. Sort
             if (sortBy === "price-low") allData.sort((a, b) => a.price - b.price);
             else if (sortBy === "price-high") allData.sort((a, b) => b.price - a.price);
             else if (sortBy === "rating") allData.sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0));
@@ -163,12 +205,16 @@ function Listings() {
         finally { setLoading(false); }
     };
 
-    useEffect(() => { fetchProperties(); }, [search, propertyType, priceRange, furnished, sortBy, location]);
+    useEffect(() => { fetchProperties(); }, [search, propertyType, priceRange, furnished, sortBy, location, minBeds, minRating, selectedAmenities, proximityKm]);
     useEffect(() => { const q = searchParams.get("search"); if (q) setSearch(q); }, [searchParams]);
 
-    const clearFilters = () => { setSearch(""); setPropertyType(""); setPriceRange(""); setFurnished(false); setSortBy("newest"); setSearchParams({}); };
+    const clearFilters = () => {
+        setSearch(""); setPropertyType(""); setPriceRange("");
+        setFurnished(false); setSortBy("newest"); setSearchParams({});
+        setMinBeds(0); setMinRating(0); setSelectedAmenities([]); setProximityKm(0);
+    };
 
-    const activeFilterCount = [search, propertyType, priceRange, furnished].filter(Boolean).length;
+    const activeFilterCount = [search, propertyType, priceRange, furnished, minBeds > 0, minRating > 0, selectedAmenities.length > 0, proximityKm > 0].filter(Boolean).length;
 
     return (
         <div className="min-h-screen bg-white dark:bg-slate-950">
@@ -275,10 +321,108 @@ function Listings() {
                                             </div>
                                             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("furnished")}</span>
                                         </label>
-                                        {activeFilterCount > 0 && (
-                                            <button onClick={clearFilters} className="text-xs px-3 py-1.5 rounded-lg bg-red-50 dark:bg-red-500/10 text-red-600 hover:bg-red-100 font-bold transition-colors">{t("clearAll")}</button>
-                                        )}
+                                        <div className="flex items-center gap-2">
+                                            {/* Advanced toggle */}
+                                            <button
+                                                onClick={() => setAdvancedOpen(!advancedOpen)}
+                                                className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-semibold border transition-colors ${
+                                                    advancedOpen
+                                                        ? "bg-indigo-50 dark:bg-indigo-500/10 border-indigo-200 dark:border-indigo-500/20 text-indigo-600 dark:text-indigo-400"
+                                                        : "border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800"
+                                                }`}
+                                            >
+                                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 4a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
+                                                Advanced {advancedOpen ? "▲" : "▼"}
+                                            </button>
+                                            {activeFilterCount > 0 && (
+                                                <button onClick={clearFilters} className="text-xs px-3 py-1.5 rounded-lg bg-red-50 dark:bg-red-500/10 text-red-600 hover:bg-red-100 font-bold transition-colors">{t("clearAll")}</button>
+                                            )}
+                                        </div>
                                     </div>
+
+                                    {/* Advanced Filters Panel */}
+                                    <AnimatePresence>
+                                        {advancedOpen && (
+                                            <motion.div
+                                                initial={{ opacity: 0, height: 0 }}
+                                                animate={{ opacity: 1, height: "auto" }}
+                                                exit={{ opacity: 0, height: 0 }}
+                                                transition={{ duration: 0.25 }}
+                                                className="overflow-hidden"
+                                            >
+                                                <div className="mt-4 pt-4 border-t border-gray-100 dark:border-slate-800 space-y-4">
+                                                    {/* Amenities */}
+                                                    <div>
+                                                        <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Amenities</p>
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {AMENITIES.map(a => (
+                                                                <button
+                                                                    key={a.key}
+                                                                    onClick={() => toggleAmenity(a.key)}
+                                                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
+                                                                        selectedAmenities.includes(a.key)
+                                                                            ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-500/20"
+                                                                            : "bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300 hover:border-indigo-300"
+                                                                    }`}
+                                                                >
+                                                                    <span>{a.icon}</span> {a.key}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                                        {/* Min Bedrooms */}
+                                                        <div>
+                                                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Min. Bedrooms</p>
+                                                            <div className="flex gap-1.5">
+                                                                {[0, 1, 2, 3, 4].map(n => (
+                                                                    <button key={n} onClick={() => setMinBeds(n)}
+                                                                        className={`w-9 h-9 rounded-xl text-sm font-bold transition-all ${
+                                                                            minBeds === n ? "bg-indigo-600 text-white" : "bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 hover:bg-indigo-50"
+                                                                        }`}>
+                                                                        {n === 0 ? "Any" : n}
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Min Rating */}
+                                                        <div>
+                                                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Min. Rating</p>
+                                                            <div className="flex gap-1.5">
+                                                                {[0, 3, 3.5, 4, 4.5].map(r => (
+                                                                    <button key={r} onClick={() => setMinRating(r)}
+                                                                        className={`px-2.5 h-9 rounded-xl text-sm font-bold transition-all ${
+                                                                            minRating === r ? "bg-amber-500 text-white" : "bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 hover:bg-amber-50"
+                                                                        }`}>
+                                                                        {r === 0 ? "Any" : `${r}★`}
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Proximity Radius */}
+                                                        {location && (
+                                                            <div className="col-span-2 md:col-span-1">
+                                                                <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                                                                    Within {proximityKm === 0 ? "Any Distance" : `${proximityKm} km`}
+                                                                </p>
+                                                                <input
+                                                                    type="range" min="0" max="20" step="1" value={proximityKm}
+                                                                    onChange={e => setProximityKm(Number(e.target.value))}
+                                                                    className="w-full accent-indigo-600"
+                                                                />
+                                                                <div className="flex justify-between text-[10px] text-gray-400 mt-1">
+                                                                    <span>Any</span><span>5km</span><span>10km</span><span>20km</span>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
                                 </motion.div>
                             )}
                         </AnimatePresence>
