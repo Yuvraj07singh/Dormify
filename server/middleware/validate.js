@@ -57,7 +57,7 @@ const schemas = {
         const priceErr = validate.isPositiveNumber(Number(body.price), "Price");
         if (priceErr) errors.push(priceErr);
         const typeErr = validate.isEnum(body.propertyType,
-            ["apartment", "room", "studio", "pg", "house", "hostel"], "Property Type");
+            ["apartment", "studio", "shared-room", "private-room", "dorm", "house"], "Property Type");
         if (typeErr) errors.push(typeErr);
         return errors;
     },

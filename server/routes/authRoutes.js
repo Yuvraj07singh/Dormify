@@ -97,7 +97,7 @@ router.post("/forgot-password", validateRequest(schemas.forgotPassword), asyncHa
     user.passwordResetExpires = Date.now() + 60 * 60 * 1000; // 1 hour
     await user.save({ validateBeforeSave: false });
 
-    const resetUrl = `${process.env.FRONTEND_URL || "http://localhost:3000"}/reset-password/${resetToken}`;
+    const resetUrl = `${process.env.FRONTEND_URL || "https://dormify-one.vercel.app"}/reset-password/${resetToken}`;
     await sendPasswordResetEmail(user.email, resetUrl);
 
     res.json({ message: "If that email is registered, a reset link has been sent." });

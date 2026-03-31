@@ -106,11 +106,11 @@ function NearbyMap() {
                 // Fetch our DB Properties with Spatial Query
                 const resDb = await fetch(`${API_URL}/api/property?lat=${location.lat}&lng=${location.lng}&radius=5000`);
                 let data = await resDb.json();
-                if (Array.isArray(data)) {
-                    setDbProperties(data.map(p => ({
-                        ...p, distance: getDistance(location.lat, location.lng, p.latitude, p.longitude)
-                    })));
-                }
+                // Handle both paginated { data: [...] } and plain array responses
+                const dbList = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
+                setDbProperties(dbList.map(p => ({
+                    ...p, distance: getDistance(location.lat, location.lng, p.latitude, p.longitude)
+                })));
 
                 // Create a 5km GeoJSON circle using Turf.js overlay
                 const center = [location.lng, location.lat];

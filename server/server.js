@@ -20,13 +20,22 @@ app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false 
 // ─── CORS ──────────────────────────────────────────────────────────
 const allowedOrigins = [
     "http://localhost:3000",
+    "https://dormify-one.vercel.app",
     process.env.FRONTEND_URL
-].filter(Boolean);
+].filter(Boolean).map(url => url.replace(/\/+$/, "")); // Remove trailing slashes
 
 app.use(cors({
     origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin)) callback(null, true);
-        else callback(new Error("Not allowed by CORS"));
+        // Allow requests with no origin (mobile apps, curl, etc.)
+        if (!origin) return callback(null, true);
+        // Normalize the incoming origin by removing trailing slash
+        const normalizedOrigin = origin.replace(/\/+$/, "");
+        if (allowedOrigins.includes(normalizedOrigin)) {
+            callback(null, true);
+        } else {
+            console.error(`CORS blocked origin: ${origin}. Allowed: ${allowedOrigins.join(", ")}`);
+            callback(new Error("Not allowed by CORS"));
+        }
     },
     credentials: true
 }));

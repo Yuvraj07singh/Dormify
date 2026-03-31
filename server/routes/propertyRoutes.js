@@ -9,7 +9,7 @@ const { cacheMiddleware, invalidateCacheMiddleware } = require("../utils/cache")
 router.use(invalidateCacheMiddleware);
 
 // Helper for pagination
-const paginate = (query, page, limit) => {
+const paginate = (page, limit) => {
     const p = parseInt(page) || 1;
     const l = Math.min(parseInt(limit) || 12, 50); // max 50 per page
     return { skip: (p - 1) * l, limit: l, page: p };
@@ -65,7 +65,7 @@ router.get("/", cacheMiddleware, asyncHandler(async (req, res) => {
         const properties = await Property.find(filter)
             .populate("owner", "name email phone avatar verifiedLandlord")
             .sort(sortBy);
-        return res.json({ data: properties, total: properties.length, page: 1, pages: 1 });
+        return res.json(properties);
     }
 
     const { skip, limit: lim, page: p } = paginate(page, limit);

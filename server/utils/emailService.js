@@ -44,7 +44,7 @@ const sendWelcomeEmail = (email, name) => sendEmail({
         <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:32px;background:#fafafa;border-radius:12px">
             <h1 style="color:#6366f1">Welcome to Dormify, ${name}! 🎉</h1>
             <p style="color:#555;font-size:16px">We're thrilled to have you on board. Start exploring premium student housing near your university.</p>
-            <a href="${process.env.FRONTEND_URL || "http://localhost:3000"}/listings"
+            <a href="${process.env.FRONTEND_URL || "https://dormify-one.vercel.app"}/listings"
                style="display:inline-block;margin-top:16px;padding:12px 24px;background:#6366f1;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold">
                Browse Properties →
             </a>
@@ -67,7 +67,7 @@ const sendBookingConfirmation = (email, name, propertyTitle, moveInDate, moveOut
                 <p style="color:#6b7280;margin:4px 0">📅 Move-out: <strong>${new Date(moveOutDate).toDateString()}</strong></p>
                 <p style="color:#6b7280;margin:4px 0">💰 Total Amount: <strong>₹${totalAmount}</strong></p>
             </div>
-            <a href="${process.env.FRONTEND_URL || "http://localhost:3000"}/bookings"
+            <a href="${process.env.FRONTEND_URL || "https://dormify-one.vercel.app"}/bookings"
                style="display:inline-block;padding:12px 24px;background:#6366f1;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold">
                View My Bookings →
             </a>

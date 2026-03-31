@@ -57,7 +57,9 @@ function Listings() {
             // 1. Fetch DB Properties
             const res = await fetch(url);
             let data = await res.json();
-            if (Array.isArray(data)) allData = [...data];
+            // Handle both paginated { data: [...] } and plain array responses
+            const dbList = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
+            allData = [...dbList];
 
             // 2. Fetch Live OSM Properties if Location is set
             if (location) {

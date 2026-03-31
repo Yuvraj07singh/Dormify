@@ -29,8 +29,8 @@ router.post("/create-checkout-session", authMiddleware, async (req, res) => {
                 },
             ],
             mode: "payment",
-            success_url: `${process.env.FRONTEND_URL || "http://localhost:3000"}/property/${propertyId}?success=true&session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${process.env.FRONTEND_URL || "http://localhost:3000"}/property/${propertyId}?canceled=true`,
+            success_url: `${process.env.FRONTEND_URL || "https://dormify-one.vercel.app"}/property/${propertyId}?success=true&session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${process.env.FRONTEND_URL || "https://dormify-one.vercel.app"}/property/${propertyId}?canceled=true`,
             customer_email: user.email,
         });
 

@@ -78,9 +78,10 @@ function Home() {
         fetch(`${API_URL}/api/property?limit=1`)
             .then(res => res.json())
             .then(data => {
-                // Use paginated total if available
-                if (data?.total !== undefined) {
-                    setLiveStats(prev => ({ ...prev, properties: data.total }));
+                // Handle both paginated { data, total } and plain array responses
+                const total = data?.total ?? (Array.isArray(data) ? data.length : 0);
+                if (total > 0) {
+                    setLiveStats(prev => ({ ...prev, properties: total }));
                 }
             })
             .catch(() => { });
