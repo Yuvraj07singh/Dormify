@@ -9,6 +9,7 @@ import SpotlightCard from "../components/SpotlightCard";
 import LiquidTextInteraction from "../components/LiquidTextInteraction";
 import { LanguageContext } from "../context/LanguageContext";
 import { AuthContext } from "../context/AuthContext";
+import { LocationContext } from "../context/LocationContext";
 import { useScrollReveal, useScrollFadeOut } from "../hooks/useScrollEffects";
 import API_URL from "../config/api";
 
@@ -58,9 +59,15 @@ function Home() {
     const [searchQuery, setSearchQuery] = useState("");
     const [showWelcome, setShowWelcome] = useState(false);
     const [activeStat, setActiveStat] = useState(null);
+    const [suggestions, setSuggestions] = useState([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const [isSearching, setIsSearching] = useState(false);
+    const searchRef = useRef(null);
+    const debounceRef = useRef(null);
     const navigate = useNavigate();
     const { t } = useContext(LanguageContext);
     const { user } = useContext(AuthContext);
+    const { setManualLocation } = useContext(LocationContext);
 
 
 
@@ -93,8 +100,58 @@ function Home() {
         }
     }, [API_URL]);
 
+    // Close suggestions on outside click
+    useEffect(() => {
+        const handler = (e) => {
+            if (searchRef.current && !searchRef.current.contains(e.target)) {
+                setShowSuggestions(false);
+            }
+        };
+        document.addEventListener("mousedown", handler);
+        return () => document.removeEventListener("mousedown", handler);
+    }, []);
+
+    // Debounced autocomplete from Nominatim
+    const handleSearchInput = (e) => {
+        const val = e.target.value;
+        setSearchQuery(val);
+        clearTimeout(debounceRef.current);
+        if (val.length < 2) { setSuggestions([]); setShowSuggestions(false); return; }
+        debounceRef.current = setTimeout(async () => {
+            setIsSearching(true);
+            try {
+                const res = await fetch(
+                    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}&limit=6&addressdetails=1`,
+                    { headers: { "Accept-Language": "en" } }
+                );
+                const data = await res.json();
+                setSuggestions(data.map(r => ({
+                    displayName: r.display_name,
+                    shortName: r.address?.city || r.address?.town || r.address?.village || r.address?.county || r.display_name.split(",")[0],
+                    region: [r.address?.state, r.address?.country].filter(Boolean).join(", "),
+                    lat: parseFloat(r.lat),
+                    lng: parseFloat(r.lon),
+                    type: r.type
+                })));
+                setShowSuggestions(true);
+            } catch (err) {
+                console.error("Autocomplete error", err);
+            } finally {
+                setIsSearching(false);
+            }
+        }, 300);
+    };
+
+    const handleSuggestionClick = (suggestion) => {
+        setSearchQuery(suggestion.shortName);
+        setShowSuggestions(false);
+        setManualLocation(suggestion.lat, suggestion.lng, suggestion.shortName);
+        navigate(`/listings?search=${encodeURIComponent(suggestion.shortName)}&lat=${suggestion.lat}&lng=${suggestion.lng}`);
+    };
+
     const handleSearch = (e) => {
         e.preventDefault();
+        setShowSuggestions(false);
         if (searchQuery.trim()) {
             navigate(`/listings?search=${encodeURIComponent(searchQuery)}`);
         }
@@ -221,7 +278,7 @@ function Home() {
                                     {t("heroDescription")}
                                 </p>
 
-                                {/* Google Style Search Bar */}
+                                {/* Google Style Search Bar with Autocomplete */}
                                 <motion.form
                                     onSubmit={handleSearch}
                                     initial={{ opacity: 0, y: 20 }}
@@ -229,25 +286,70 @@ function Home() {
                                     transition={{ delay: 0.5 }}
                                     className="mt-8 flex gap-3 items-center"
                                 >
-                                    <div className="flex-1 relative group w-full bg-white dark:bg-[#1f1f1f] rounded-full shadow-[0_1px_5px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.15)] dark:shadow-none dark:hover:shadow-[0_2px_15px_rgba(255,255,255,0.05)] transition-all duration-300">
-                                        <svg className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 z-20" viewBox="0 0 24 24" fill="none" stroke="url(#google-colors)">
-                                            <defs>
-                                                <linearGradient id="google-colors" x1="0%" y1="0%" x2="100%" y2="100%">
-                                                    <stop offset="0%" stopColor="#4285F4" />
-                                                    <stop offset="33%" stopColor="#EA4335" />
-                                                    <stop offset="66%" stopColor="#FBBC05" />
-                                                    <stop offset="100%" stopColor="#34A853" />
-                                                </linearGradient>
-                                            </defs>
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                        </svg>
-                                        <input
-                                            type="text"
-                                            value={searchQuery}
-                                            onChange={(e) => setSearchQuery(e.target.value)}
-                                            placeholder={t("searchPlaceholder")}
-                                            className="w-full pl-12 pr-6 py-3.5 rounded-full bg-transparent border-none text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-0 transition-all font-medium text-base relative z-10"
-                                        />
+                                    <div ref={searchRef} className="flex-1 relative group w-full">
+                                        <div className="w-full bg-white dark:bg-[#1f1f1f] rounded-full shadow-[0_1px_5px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.15)] dark:shadow-none dark:hover:shadow-[0_2px_15px_rgba(255,255,255,0.05)] transition-all duration-300">
+                                            <svg className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 z-20" viewBox="0 0 24 24" fill="none" stroke="url(#google-colors)">
+                                                <defs>
+                                                    <linearGradient id="google-colors" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                        <stop offset="0%" stopColor="#4285F4" />
+                                                        <stop offset="33%" stopColor="#EA4335" />
+                                                        <stop offset="66%" stopColor="#FBBC05" />
+                                                        <stop offset="100%" stopColor="#34A853" />
+                                                    </linearGradient>
+                                                </defs>
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                            </svg>
+                                            {isSearching && (
+                                                <svg className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-indigo-500 z-20" viewBox="0 0 24 24" fill="none">
+                                                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25" />
+                                                    <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" className="opacity-75" />
+                                                </svg>
+                                            )}
+                                            <input
+                                                type="text"
+                                                value={searchQuery}
+                                                onChange={handleSearchInput}
+                                                onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                                                placeholder={t("searchPlaceholder")}
+                                                className="w-full pl-12 pr-10 py-3.5 rounded-full bg-transparent border-none text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-0 transition-all font-medium text-base relative z-10"
+                                            />
+                                        </div>
+
+                                        {/* Autocomplete Dropdown */}
+                                        <AnimatePresence>
+                                            {showSuggestions && suggestions.length > 0 && (
+                                                <motion.div
+                                                    initial={{ opacity: 0, y: -4, scale: 0.98 }}
+                                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                    exit={{ opacity: 0, y: -4, scale: 0.98 }}
+                                                    transition={{ duration: 0.15 }}
+                                                    className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-700 overflow-hidden z-50"
+                                                >
+                                                    {suggestions.map((s, i) => (
+                                                        <button
+                                                            key={i}
+                                                            type="button"
+                                                            onClick={() => handleSuggestionClick(s)}
+                                                            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-indigo-50 dark:hover:bg-slate-800 transition-colors text-left group"
+                                                        >
+                                                            <span className="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-500/10 flex items-center justify-center flex-shrink-0">
+                                                                <svg className="w-4 h-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                </svg>
+                                                            </span>
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="text-sm font-semibold text-gray-800 dark:text-white truncate">{s.shortName}</p>
+                                                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{s.region}</p>
+                                                            </div>
+                                                            <svg className="w-4 h-4 text-gray-300 group-hover:text-indigo-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                                            </svg>
+                                                        </button>
+                                                    ))}
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
                                     </div>
                                     <motion.button
                                         whileHover={{
