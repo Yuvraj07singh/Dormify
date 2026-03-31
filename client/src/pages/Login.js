@@ -76,19 +76,7 @@ function Login() {
                     </motion.div>
                 </form>
 
-                {/* Demo Accounts */}
-                <div className="mt-6 p-4 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20">
-                    <p className="text-xs font-medium text-indigo-600 dark:text-indigo-400 mb-2">Demo Accounts:</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">Student: student@dormify.com / password123</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">Landlord: landlord@dormify.com / password123</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">Admin: admin@dormify.com / admin123</p>
-                </div>
 
-                <div className="flex items-center gap-4 my-6">
-                    <div className="flex-1 h-px bg-gray-200 dark:bg-slate-700" />
-                    <span className="text-sm text-gray-400">or</span>
-                    <div className="flex-1 h-px bg-gray-200 dark:bg-slate-700" />
-                </div>
 
                 <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} className="text-center text-gray-500 dark:text-gray-400">
                     Don't have an account?{" "}
