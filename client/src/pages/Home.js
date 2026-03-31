@@ -252,8 +252,8 @@ function Home() {
                     <div className="absolute inset-0 vercel-grid-bg opacity-40 dark:opacity-20" />
                     <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white dark:to-slate-950" />
 
-                    <div className="relative max-w-7xl mx-auto px-6 pt-32 pb-20 w-full">
-                        <div className="grid lg:grid-cols-2 gap-16 items-center">
+                    <div className="relative max-w-7xl mx-auto px-4 md:px-6 pt-20 md:pt-32 pb-12 md:pb-20 w-full">
+                        <div className="grid lg:grid-cols-2 gap-8 md:gap-16 items-center">
                             {/* Left Content */}
                             <motion.div
                                 initial={{ opacity: 0, x: -60 }}
@@ -274,7 +274,7 @@ function Home() {
                                     text3={t("nearCampus")}
                                 />
 
-                                <p className="mt-6 text-lg text-gray-600 dark:text-gray-300 max-w-lg leading-relaxed">
+                                <p className="mt-4 md:mt-6 text-base md:text-lg text-gray-600 dark:text-gray-300 max-w-lg leading-relaxed">
                                     {t("heroDescription")}
                                 </p>
 
@@ -577,7 +577,7 @@ function Home() {
                 <NearbyMap />
 
                 {/* ==================== FEATURED LISTINGS ==================== */}
-                <section className="py-24 px-6 bg-gray-50/50 dark:bg-slate-900/50">
+                <section className="py-12 md:py-24 px-4 md:px-6 bg-gray-50/50 dark:bg-slate-900/50">
                     <div className="max-w-7xl mx-auto">
                         <ScrollRevealSection>
                             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-12">
@@ -601,7 +601,7 @@ function Home() {
                             </div>
                         </ScrollRevealSection>
 
-                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-8">
                             {loading ? (
                                 [...Array(6)].map((_, i) => <SkeletonCard key={i} />)
                             ) : (
@@ -626,7 +626,7 @@ function Home() {
                 </section>
 
                 {/* ==================== HOW IT WORKS ==================== */}
-                <section className="py-24 px-6">
+                <section className="py-12 md:py-24 px-4 md:px-6">
                     <div className="max-w-7xl mx-auto">
                         <ScrollRevealSection>
                             <div className="text-center mb-16">
