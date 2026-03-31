@@ -42,6 +42,7 @@ function Navbar() {
     const navLinks = [
         { path: "/", label: t("home") },
         { path: "/listings", label: t("listings") },
+        { path: "/budget-analyzer", label: "💰 Budget" },
         { path: "/pricing", label: "Pricing" },
         { path: "/compare", label: "Compare" },
         ...(user ? [{ path: "/chat", label: "Messages" }] : []),
