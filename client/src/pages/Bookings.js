@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
+import API_URL from "../config/api";
 
 function Bookings() {
     const { user } = useContext(AuthContext);
@@ -13,7 +14,7 @@ function Bookings() {
     useEffect(() => {
         if (!user) { navigate("/login"); return; }
         const endpoint = user.role === "landlord" ? "/api/booking/landlord" : "/api/booking/my";
-        const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
         axios.get(`${API_URL}${endpoint}`)
             .then(res => { setBookings(Array.isArray(res.data) ? res.data : []); setLoading(false); })
             .catch(() => setLoading(false));
@@ -21,7 +22,7 @@ function Bookings() {
 
     const updateStatus = async (id, status) => {
         try {
-            const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
             await axios.put(`${API_URL}/api/booking/${id}/status`, { status });
             setBookings(prev => prev.map(b => b._id === id ? { ...b, status } : b));
         } catch (err) { console.error(err); }

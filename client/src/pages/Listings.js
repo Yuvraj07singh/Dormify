@@ -7,6 +7,7 @@ import SkeletonCard from "../components/SkeletonCard";
 import Footer from "../components/Footer";
 import { LanguageContext } from "../context/LanguageContext";
 import { LocationContext } from "../context/LocationContext";
+import API_URL from "../config/api";
 
 // Haversine formula
 const getDistance = (lat1, lon1, lat2, lon2) => {
@@ -41,7 +42,7 @@ function Listings() {
     const fetchProperties = async () => {
         setLoading(true);
         try {
-            const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
             let url = `${API_URL}/api/property?`;
             if (search) url += `search=${encodeURIComponent(search)}&`;
             if (propertyType) url += `propertyType=${propertyType}&`;
@@ -50,9 +51,9 @@ function Listings() {
                 const [min, max] = priceRange.split("-");
                 url += `minPrice=${min}&maxPrice=${max}&`;
             }
-            
+
             let allData = [];
-            
+
             // 1. Fetch DB Properties
             const res = await fetch(url);
             let data = await res.json();
@@ -62,7 +63,7 @@ function Listings() {
             if (location) {
                 const query = `[out:json];(node["tourism"="hotel"](around:5000,${location.lat},${location.lng});node["tourism"="hostel"](around:5000,${location.lat},${location.lng});node["building"="dormitory"](around:5000,${location.lat},${location.lng});node["building"="apartments"](around:5000,${location.lat},${location.lng}););out 30;`;
                 const osmRes = await axios.get(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
-                
+
                 if (osmRes.data && osmRes.data.elements) {
                     const liveData = osmRes.data.elements.map(el => ({
                         _id: `osm-${el.id}`,
@@ -86,8 +87,8 @@ function Listings() {
                     let filteredLive = liveData;
                     if (propertyType) filteredLive = filteredLive.filter(p => p.propertyType === propertyType);
                     if (priceRange) {
-                       const [min, max] = priceRange.split("-");
-                       filteredLive = filteredLive.filter(p => p.price >= Number(min) && p.price <= (max === '999999' ? Infinity : Number(max)));
+                        const [min, max] = priceRange.split("-");
+                        filteredLive = filteredLive.filter(p => p.price >= Number(min) && p.price <= (max === '999999' ? Infinity : Number(max)));
                     }
 
                     allData = [...allData, ...filteredLive];
@@ -101,17 +102,17 @@ function Listings() {
             else if (location && sortBy === "newest") {
                 // If sorting by nearest (default when location is active)
                 allData.forEach(p => {
-                     if (p.distance === undefined) {
-                         p.distance = getDistance(location.lat, location.lng, p.latitude, p.longitude) || 9999;
-                     }
+                    if (p.distance === undefined) {
+                        p.distance = getDistance(location.lat, location.lng, p.latitude, p.longitude) || 9999;
+                    }
                 });
                 allData.sort((a, b) => a.distance - b.distance);
             }
 
             setProperties(allData);
-        } catch (err) { 
+        } catch (err) {
             console.error(err);
-            setProperties([]); 
+            setProperties([]);
         }
         finally { setLoading(false); }
     };

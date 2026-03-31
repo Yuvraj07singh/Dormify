@@ -4,11 +4,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import toast from "react-hot-toast";
+import API_URL from "../config/api";
 
-const API = process.env.REACT_APP_API_URL || "http://localhost:5000";
+const API = API_URL;
 
 const statusColors = {
-    pending:   { bg: "bg-amber-500/20", text: "text-amber-400", border: "border-amber-500/30" },
+    pending: { bg: "bg-amber-500/20", text: "text-amber-400", border: "border-amber-500/30" },
     confirmed: { bg: "bg-emerald-500/20", text: "text-emerald-400", border: "border-emerald-500/30" },
     cancelled: { bg: "bg-red-500/20", text: "text-red-400", border: "border-red-500/30" },
     completed: { bg: "bg-blue-500/20", text: "text-blue-400", border: "border-blue-500/30" }
@@ -18,7 +19,7 @@ function BookingCard({ booking, onAction }) {
     const [acting, setActing] = useState(false);
     const sc = statusColors[booking.status] || statusColors.pending;
     const months = booking.moveInDate && booking.moveOutDate
-        ? Math.max(1, Math.ceil((new Date(booking.moveOutDate) - new Date(booking.moveInDate)) / (1000*60*60*24*30)))
+        ? Math.max(1, Math.ceil((new Date(booking.moveOutDate) - new Date(booking.moveInDate)) / (1000 * 60 * 60 * 24 * 30)))
         : 1;
 
     const handleStatus = async (status) => {

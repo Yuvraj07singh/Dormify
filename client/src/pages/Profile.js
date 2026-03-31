@@ -5,6 +5,7 @@ import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
 import PropertyCard from "../components/PropertyCard";
 import Footer from "../components/Footer";
+import API_URL from "../config/api";
 
 function Profile() {
     const { id } = useParams();
@@ -22,7 +23,7 @@ function Profile() {
     useEffect(() => {
         const fetchProfile = async () => {
             try {
-                const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
                 const res = await axios.get(`${API_URL}/api/user/${id}`);
                 setProfile(res.data.user);
                 setListings(res.data.listings || []);
@@ -43,7 +44,7 @@ function Profile() {
 
     const handleSave = async () => {
         try {
-            const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
             const res = await axios.put(`${API_URL}/api/user/profile`, editForm);
             setProfile(res.data);
             setEditing(false);
@@ -61,17 +62,17 @@ function Profile() {
             const formData = new FormData();
             formData.append("images", file);
 
-            const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
-            
+
+
             // Upload to Cloudinary
             const uploadRes = await axios.post(`${API_URL}/api/upload/image`, formData, {
                 headers: { "Content-Type": "multipart/form-data" }
             });
-            
+
             // Submit URL to KYC endpoint
             const docUrl = uploadRes.data.urls[0];
             const kycRes = await axios.put(`${API_URL}/api/user/kyc`, { documentUrl: docUrl });
-            
+
             setProfile({ ...profile, kycStatus: kycRes.data.kycStatus });
             alert("KYC Document submitted successfully! Awaiting Admin review.");
         } catch (err) {
@@ -197,7 +198,7 @@ function Profile() {
 
                             {/* KYC Upload Banner (Only show if own profile and not verified) */}
                             {isOwnProfile && profile.kycStatus !== "verified" && profile.kycStatus !== "pending" && (
-                                <motion.div 
+                                <motion.div
                                     initial={{ opacity: 0, scale: 0.95 }}
                                     animate={{ opacity: 1, scale: 1 }}
                                     className="mb-8 p-6 rounded-3xl bg-amber-50 dark:bg-amber-500/10 border-l-4 border-amber-500 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm"

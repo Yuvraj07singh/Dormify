@@ -10,6 +10,7 @@ import LiquidTextInteraction from "../components/LiquidTextInteraction";
 import { LanguageContext } from "../context/LanguageContext";
 import { AuthContext } from "../context/AuthContext";
 import { useScrollReveal, useScrollFadeOut } from "../hooks/useScrollEffects";
+import API_URL from "../config/api";
 
 const stats = [
     { numberKey: "students", fallback: "50,000+", labelKey: "happyStudents", icon: "🎓" },
@@ -61,7 +62,7 @@ function Home() {
     const { t } = useContext(LanguageContext);
     const { user } = useContext(AuthContext);
 
-    const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
 
     useEffect(() => {
         // Fetch featured properties
@@ -82,7 +83,7 @@ function Home() {
                     setLiveStats(prev => ({ ...prev, properties: data.total }));
                 }
             })
-            .catch(() => {});
+            .catch(() => { });
 
         // Check for newly registered user
         if (sessionStorage.getItem("showWelcomeModal") === "true") {
@@ -139,12 +140,12 @@ function Home() {
             <AnimatePresence>
                 {showWelcome && (
                     <div className="fixed inset-0 z-[999] flex items-center justify-center p-4">
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
                             onClick={() => setShowWelcome(false)}
                         />
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }}
                             className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-8 overflow-hidden"
                         >
@@ -156,7 +157,7 @@ function Home() {
                             <p className="text-gray-600 dark:text-gray-400 mb-8">
                                 Account created successfully. Let's find your perfect place to stay near campus.
                             </p>
-                            
+
                             <div className="space-y-4 mb-8">
                                 <div className="flex items-start gap-3">
                                     <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center shrink-0">
@@ -177,7 +178,7 @@ function Home() {
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <button onClick={() => setShowWelcome(false)} className="w-full py-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition-colors shadow-lg shadow-indigo-500/30">
                                 Let's go! →
                             </button>
@@ -209,7 +210,7 @@ function Home() {
                                 </div>
 
                                 {/* Flashlight Liquid Text Reveal Component */}
-                                <LiquidTextInteraction 
+                                <LiquidTextInteraction
                                     text1={t("findYour")}
                                     text2={t("perfectDorm")}
                                     text3={t("nearCampus")}
@@ -248,9 +249,9 @@ function Home() {
                                         />
                                     </div>
                                     <motion.button
-                                        whileHover={{ 
-                                            scale: 1.04, 
-                                            backgroundColor: "rgba(255, 255, 255, 0.3)", 
+                                        whileHover={{
+                                            scale: 1.04,
+                                            backgroundColor: "rgba(255, 255, 255, 0.3)",
                                             backdropFilter: "blur(12px)",
                                             boxShadow: "inset 0 0 20px rgba(255, 255, 255, 0.6), 0 10px 30px rgba(0, 0, 0, 0.15)",
                                             borderColor: "rgba(255, 255, 255, 0.5)"
@@ -316,7 +317,7 @@ function Home() {
                                         const heroPrice = heroProperty ? `₹${heroProperty.price?.toLocaleString('en-IN')}` : "₹22,000";
                                         const heroRating = heroProperty?.avgRating || 4.9;
                                         const heroReviews = heroProperty?.reviewCount || 238;
-                                        const heroAmenities = heroProperty?.amenities?.slice(0,4) || ["WiFi","AC","Furnished","Parking"];
+                                        const heroAmenities = heroProperty?.amenities?.slice(0, 4) || ["WiFi", "AC", "Furnished", "Parking"];
                                         return (
                                             <>
                                                 <img
@@ -333,7 +334,7 @@ function Home() {
                                                             <p className="text-white/70 text-xs font-medium mb-1 uppercase tracking-widest">{heroCity}</p>
                                                             <h3 className="text-white font-bold text-lg leading-tight">{heroTitle}</h3>
                                                             <div className="flex items-center gap-2 mt-1">
-                                                                <div className="flex">{[1,2,3,4,5].map(s=><svg key={s} className="w-3 h-3 text-amber-400 fill-current" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>)}</div>
+                                                                <div className="flex">{[1, 2, 3, 4, 5].map(s => <svg key={s} className="w-3 h-3 text-amber-400 fill-current" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" /></svg>)}</div>
                                                                 <span className="text-white/60 text-xs">{heroRating} ({heroReviews} reviews)</span>
                                                             </div>
                                                         </div>
@@ -407,31 +408,31 @@ function Home() {
             {/* ==================== ANTIGRAVITY SLIDE-OVER WRAPPER ==================== */}
             <div className="relative z-10 bg-white dark:bg-[#000000] w-full pt-10 pb-10 rounded-t-[3rem] shadow-[0_-30px_60px_rgba(0,0,0,0.1)] dark:shadow-[0_-30px_60px_rgba(0,0,0,0.5)]">
 
-            {/* ==================== STATS ==================== */}
-            <ScrollRevealSection>
-                <section className="relative py-20 overflow-hidden">
-                    {/* Vercel-style Dark Minimalist Background */}
-                    <div className="absolute inset-0 bg-black" />
-                    <div className="absolute inset-0 vercel-dot-bg opacity-30 mask-image-bottom" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black" />
+                {/* ==================== STATS ==================== */}
+                <ScrollRevealSection>
+                    <section className="relative py-20 overflow-hidden">
+                        {/* Vercel-style Dark Minimalist Background */}
+                        <div className="absolute inset-0 bg-black" />
+                        <div className="absolute inset-0 vercel-dot-bg opacity-30 mask-image-bottom" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black" />
 
-                    <div className="relative max-w-7xl mx-auto px-6">
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
-                            {stats.map((stat, i) => {
-                                // For live-fetched stats, compute the display value
-                                let displayNumber = stat.number;
-                                if (stat.numberKey === "properties" && liveStats?.properties) {
-                                    displayNumber = liveStats.properties.toLocaleString('en-IN') + "+";
-                                }
+                        <div className="relative max-w-7xl mx-auto px-6">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+                                {stats.map((stat, i) => {
+                                    // For live-fetched stats, compute the display value
+                                    let displayNumber = stat.number;
+                                    if (stat.numberKey === "properties" && liveStats?.properties) {
+                                        displayNumber = liveStats.properties.toLocaleString('en-IN') + "+";
+                                    }
                                     return (
-                                        <div 
+                                        <div
                                             key={i}
                                             onClick={() => setActiveStat(i)}
                                             className="relative rounded-[1.5rem] overflow-hidden group cursor-pointer transition-transform duration-300 transform hover:scale-[1.02]"
                                         >
                                             {/* Spinning High-Contrast Light Border Layer (Only shown when clicked/active) */}
                                             {activeStat === i && (
-                                                <div 
+                                                <div
                                                     className="absolute top-1/2 left-1/2 w-[250%] h-[250%] -translate-x-1/2 -translate-y-1/2"
                                                     style={{
                                                         background: "conic-gradient(from 0deg, transparent 60%, rgba(99, 102, 241, 1) 80%, rgba(168, 85, 247, 1) 100%)",
@@ -463,238 +464,238 @@ function Home() {
                                             </SpotlightCard>
                                         </div>
                                     );
-                            })}
+                                })}
+                            </div>
+                        </div>
+                    </section>
+                </ScrollRevealSection>
+
+                {/* ==================== MAP & NEARBY PROPERTIES ==================== */}
+                <NearbyMap />
+
+                {/* ==================== FEATURED LISTINGS ==================== */}
+                <section className="py-24 px-6 bg-gray-50/50 dark:bg-slate-900/50">
+                    <div className="max-w-7xl mx-auto">
+                        <ScrollRevealSection>
+                            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-12">
+                                <div>
+                                    <h2 className="text-3xl md:text-4xl font-display font-bold text-gray-900 dark:text-white">
+                                        {t("featuredListings")} <span className="gradient-text">{t("listingsSuffix")}</span>
+                                    </h2>
+                                    <p className="mt-3 text-gray-600 dark:text-gray-400 max-w-md">
+                                        {t("handpicked")}
+                                    </p>
+                                </div>
+                                <Link
+                                    to="/listings"
+                                    className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-semibold hover:gap-3 transition-all duration-300"
+                                >
+                                    {t("viewAll")}
+                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                                    </svg>
+                                </Link>
+                            </div>
+                        </ScrollRevealSection>
+
+                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {loading ? (
+                                [...Array(6)].map((_, i) => <SkeletonCard key={i} />)
+                            ) : (
+                                featured.map((property, i) => (
+                                    <motion.div
+                                        key={property._id}
+                                        initial={{ opacity: 0, y: 60, scale: 0.9 }}
+                                        whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                                        viewport={{ once: true, amount: 0.15 }}
+                                        transition={{
+                                            delay: i * 0.12,
+                                            duration: 0.7,
+                                            ease: [0.16, 1, 0.3, 1]
+                                        }}
+                                    >
+                                        <PropertyCard {...property} />
+                                    </motion.div>
+                                ))
+                            )}
                         </div>
                     </div>
                 </section>
-            </ScrollRevealSection>
 
-            {/* ==================== MAP & NEARBY PROPERTIES ==================== */}
-            <NearbyMap />
-
-            {/* ==================== FEATURED LISTINGS ==================== */}
-            <section className="py-24 px-6 bg-gray-50/50 dark:bg-slate-900/50">
-                <div className="max-w-7xl mx-auto">
-                    <ScrollRevealSection>
-                        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-12">
-                            <div>
+                {/* ==================== HOW IT WORKS ==================== */}
+                <section className="py-24 px-6">
+                    <div className="max-w-7xl mx-auto">
+                        <ScrollRevealSection>
+                            <div className="text-center mb-16">
                                 <h2 className="text-3xl md:text-4xl font-display font-bold text-gray-900 dark:text-white">
-                                    {t("featuredListings")} <span className="gradient-text">{t("listingsSuffix")}</span>
+                                    {t("howItWorks")} <span className="gradient-text">Dormify</span> {t("works")}
                                 </h2>
-                                <p className="mt-3 text-gray-600 dark:text-gray-400 max-w-md">
-                                    {t("handpicked")}
+                                <p className="mt-4 text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+                                    {t("findingHome")}
                                 </p>
                             </div>
-                            <Link
-                                to="/listings"
-                                className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-semibold hover:gap-3 transition-all duration-300"
-                            >
-                                {t("viewAll")}
-                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                                </svg>
-                            </Link>
-                        </div>
-                    </ScrollRevealSection>
+                        </ScrollRevealSection>
 
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {loading ? (
-                            [...Array(6)].map((_, i) => <SkeletonCard key={i} />)
-                        ) : (
-                            featured.map((property, i) => (
-                                <motion.div
-                                    key={property._id}
-                                    initial={{ opacity: 0, y: 60, scale: 0.9 }}
-                                    whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                                    viewport={{ once: true, amount: 0.15 }}
-                                    transition={{ 
-                                        delay: i * 0.12, 
-                                        duration: 0.7,
-                                        ease: [0.16, 1, 0.3, 1]
-                                    }}
-                                >
-                                    <PropertyCard {...property} />
-                                </motion.div>
-                            ))
-                        )}
+                        <div className="grid md:grid-cols-3 gap-8">
+                            {howItWorks.map((item, i) => (
+                                <SpotlightCard key={i} className="bento-card group rounded-3xl" spotlightColor="rgba(99, 102, 241, 0.12)">
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 60, rotateX: 15 }}
+                                        whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
+                                        viewport={{ once: true }}
+                                        transition={{ delay: i * 0.2, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+                                        whileHover={{ y: -10, transition: { duration: 0.3 } }}
+                                        className="p-10 h-full w-full"
+                                    >
+                                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white mb-6 shadow-lg shadow-indigo-500/25 group-hover:shadow-xl group-hover:shadow-indigo-500/30 group-hover:scale-110 transition-all duration-300">
+                                            {item.icon}
+                                        </div>
+
+                                        <span className="absolute top-6 right-8 text-6xl font-bold text-gray-100 dark:text-slate-800 font-display transition-colors">
+                                            {item.step}
+                                        </span>
+
+                                        <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-3">{item.title}</h3>
+                                        <p className="text-gray-600 dark:text-gray-400 leading-relaxed">{item.description}</p>
+                                    </motion.div>
+                                </SpotlightCard>
+                            ))}
+                        </div>
                     </div>
-                </div>
-            </section>
+                </section>
 
-            {/* ==================== HOW IT WORKS ==================== */}
-            <section className="py-24 px-6">
-                <div className="max-w-7xl mx-auto">
-                    <ScrollRevealSection>
-                        <div className="text-center mb-16">
-                            <h2 className="text-3xl md:text-4xl font-display font-bold text-gray-900 dark:text-white">
-                                {t("howItWorks")} <span className="gradient-text">Dormify</span> {t("works")}
-                            </h2>
-                            <p className="mt-4 text-gray-600 dark:text-gray-400 max-w-md mx-auto">
-                                {t("findingHome")}
-                            </p>
-                        </div>
-                    </ScrollRevealSection>
+                {/* ==================== UNIVERSITIES ==================== */}
+                <section className="py-20 px-6">
+                    <div className="max-w-7xl mx-auto">
+                        <ScrollRevealSection>
+                            <div className="text-center mb-12">
+                                <h2 className="text-3xl md:text-4xl font-display font-bold text-gray-900 dark:text-white">
+                                    {t("housingNear")} <span className="gradient-text">{t("topUniversities")}</span>
+                                </h2>
+                                <p className="mt-4 text-gray-600 dark:text-gray-400">
+                                    {t("weCover")}
+                                </p>
+                            </div>
+                        </ScrollRevealSection>
 
-                    <div className="grid md:grid-cols-3 gap-8">
-                        {howItWorks.map((item, i) => (
-                            <SpotlightCard key={i} className="bento-card group rounded-3xl" spotlightColor="rgba(99, 102, 241, 0.12)">
+                        <div className="flex flex-wrap justify-center gap-3">
+                            {indianUniversities.map((uni, i) => (
                                 <motion.div
-                                    initial={{ opacity: 0, y: 60, rotateX: 15 }}
-                                    whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
+                                    key={uni}
+                                    initial={{ opacity: 0, scale: 0.8 }}
+                                    whileInView={{ opacity: 1, scale: 1 }}
                                     viewport={{ once: true }}
-                                    transition={{ delay: i * 0.2, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-                                    whileHover={{ y: -10, transition: { duration: 0.3 } }}
-                                    className="p-10 h-full w-full"
+                                    transition={{ delay: i * 0.04, duration: 0.4 }}
+                                    whileHover={{ scale: 1.08, y: -3 }}
                                 >
-                                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white mb-6 shadow-lg shadow-indigo-500/25 group-hover:shadow-xl group-hover:shadow-indigo-500/30 group-hover:scale-110 transition-all duration-300">
-                                        {item.icon}
-                                    </div>
-
-                                    <span className="absolute top-6 right-8 text-6xl font-bold text-gray-100 dark:text-slate-800 font-display transition-colors">
-                                        {item.step}
-                                    </span>
-
-                                    <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-3">{item.title}</h3>
-                                    <p className="text-gray-600 dark:text-gray-400 leading-relaxed">{item.description}</p>
+                                    <Link
+                                        to={`/listings?search=${uni}`}
+                                        className="inline-block px-5 py-2.5 rounded-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-indigo-300 dark:hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-lg transition-all duration-300"
+                                    >
+                                        {uni}
+                                    </Link>
                                 </motion.div>
-                            </SpotlightCard>
-                        ))}
+                            ))}
+                        </div>
                     </div>
-                </div>
-            </section>
+                </section>
 
-            {/* ==================== UNIVERSITIES ==================== */}
-            <section className="py-20 px-6">
-                <div className="max-w-7xl mx-auto">
+                {/* ==================== TESTIMONIALS ==================== */}
+                <section className="py-20 overflow-hidden">
                     <ScrollRevealSection>
-                        <div className="text-center mb-12">
+                        <div className="text-center mb-12 px-6">
                             <h2 className="text-3xl md:text-4xl font-display font-bold text-gray-900 dark:text-white">
-                                {t("housingNear")} <span className="gradient-text">{t("topUniversities")}</span>
+                                Loved by <span className="gradient-text">Students Nationwide</span>
                             </h2>
-                            <p className="mt-4 text-gray-600 dark:text-gray-400">
-                                {t("weCover")}
-                            </p>
+                            <p className="mt-3 text-gray-500 dark:text-gray-400">Hear from 50,000+ students who found their perfect home on Dormify</p>
                         </div>
                     </ScrollRevealSection>
 
-                    <div className="flex flex-wrap justify-center gap-3">
-                        {indianUniversities.map((uni, i) => (
-                            <motion.div
-                                key={uni}
-                                initial={{ opacity: 0, scale: 0.8 }}
-                                whileInView={{ opacity: 1, scale: 1 }}
-                                viewport={{ once: true }}
-                                transition={{ delay: i * 0.04, duration: 0.4 }}
-                                whileHover={{ scale: 1.08, y: -3 }}
-                            >
-                                <Link
-                                    to={`/listings?search=${uni}`}
-                                    className="inline-block px-5 py-2.5 rounded-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-indigo-300 dark:hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-lg transition-all duration-300"
-                                >
-                                    {uni}
-                                </Link>
-                            </motion.div>
-                        ))}
-                    </div>
-                </div>
-            </section>
+                    {/* Marquee Container */}
+                    <div className="relative">
+                        {/* Fade edges */}
+                        <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-white dark:from-slate-950 to-transparent z-10 pointer-events-none" />
+                        <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-white dark:from-slate-950 to-transparent z-10 pointer-events-none" />
 
-            {/* ==================== TESTIMONIALS ==================== */}
-            <section className="py-20 overflow-hidden">
-                <ScrollRevealSection>
-                    <div className="text-center mb-12 px-6">
-                        <h2 className="text-3xl md:text-4xl font-display font-bold text-gray-900 dark:text-white">
-                            Loved by <span className="gradient-text">Students Nationwide</span>
-                        </h2>
-                        <p className="mt-3 text-gray-500 dark:text-gray-400">Hear from 50,000+ students who found their perfect home on Dormify</p>
-                    </div>
-                </ScrollRevealSection>
-
-                {/* Marquee Container */}
-                <div className="relative">
-                    {/* Fade edges */}
-                    <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-white dark:from-slate-950 to-transparent z-10 pointer-events-none" />
-                    <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-white dark:from-slate-950 to-transparent z-10 pointer-events-none" />
-                    
-                    <motion.div
-                        animate={{ x: [0, -2400] }}
-                        transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
-                        className="flex gap-6 w-max"
-                    >
-                        {[
-                            { name: "Priya Sharma", college: "IIT Bombay", avatar: "PS", rating: 5, color: "bg-pink-500", text: "Found my PG in 10 minutes! The verified badges gave me confidence. Moved in within 3 days of booking. Absolutely love Dormify!" },
-                            { name: "Arjun Mehta", college: "Delhi University", avatar: "AM", rating: 5, color: "bg-blue-500", text: "The comparison feature is a game changer. I compared 3 PGs side by side and picked the best one. Saved me so much time!" },
-                            { name: "Sneha Patel", college: "IISc Bangalore", avatar: "SP", rating: 5, color: "bg-emerald-500", text: "Real-time nearby properties using my location was incredible. Found a great hostel 500m from campus that I would have never found otherwise." },
-                            { name: "Rohan Gupta", college: "BITS Pilani", avatar: "RG", rating: 4, color: "bg-amber-500", text: "The landlord was responsive and the booking process was seamless. Highly recommend for any student looking for accommodation near campus." },
-                            { name: "Ananya Krishnan", college: "Anna University", avatar: "AK", rating: 5, color: "bg-purple-500", text: "As a girl student, the verified listings and safety features gave my parents peace of mind. The chat feature to message landlords is brilliant!" },
-                            { name: "Vikram Singh", college: "NIT Trichy", avatar: "VS", rating: 5, color: "bg-rose-500", text: "The price filters and Best Match scores helped me find a furnished PG within my budget near campus. Highly recommend to all NIT students!" },
-                            // Duplicates for infinite loop
-                            { name: "Priya Sharma", college: "IIT Bombay", avatar: "PS", rating: 5, color: "bg-pink-500", text: "Found my PG in 10 minutes! The verified badges gave me confidence. Moved in within 3 days of booking. Absolutely love Dormify!" },
-                            { name: "Arjun Mehta", college: "Delhi University", avatar: "AM", rating: 5, color: "bg-blue-500", text: "The comparison feature is a game changer. I compared 3 PGs side by side and picked the best one. Saved me so much time!" },
-                            { name: "Sneha Patel", college: "IISc Bangalore", avatar: "SP", rating: 5, color: "bg-emerald-500", text: "Real-time nearby properties using my location was incredible. Found a great hostel 500m from campus that I would have never found otherwise." },
-                            { name: "Rohan Gupta", college: "BITS Pilani", avatar: "RG", rating: 4, color: "bg-amber-500", text: "The landlord was responsive and the booking process was seamless. Highly recommend for any student looking for accommodation near campus." },
-                        ].map((review, i) => (
-                            <div key={i} className="w-80 flex-shrink-0 bg-white dark:bg-slate-900 rounded-2xl p-6 border border-gray-100 dark:border-slate-800 shadow-lg">
-                                <div className="flex gap-0.5 mb-4">
-                                    {[1,2,3,4,5].map(s => (
-                                        <svg key={s} className={`w-4 h-4 ${s <= review.rating ? "text-amber-400 fill-current" : "text-gray-200"}`} viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" /></svg>
-                                    ))}
-                                </div>
-                                <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed line-clamp-4 italic">"{review.text}"</p>
-                                <div className="flex items-center gap-3 mt-5 pt-4 border-t border-gray-100 dark:border-slate-800">
-                                    <div className={`w-10 h-10 rounded-full ${review.color} flex items-center justify-center text-white font-bold text-sm`}>{review.avatar}</div>
-                                    <div>
-                                        <p className="font-bold text-gray-900 dark:text-white text-sm">{review.name}</p>
-                                        <p className="text-xs text-gray-500">{review.college}</p>
+                        <motion.div
+                            animate={{ x: [0, -2400] }}
+                            transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+                            className="flex gap-6 w-max"
+                        >
+                            {[
+                                { name: "Priya Sharma", college: "IIT Bombay", avatar: "PS", rating: 5, color: "bg-pink-500", text: "Found my PG in 10 minutes! The verified badges gave me confidence. Moved in within 3 days of booking. Absolutely love Dormify!" },
+                                { name: "Arjun Mehta", college: "Delhi University", avatar: "AM", rating: 5, color: "bg-blue-500", text: "The comparison feature is a game changer. I compared 3 PGs side by side and picked the best one. Saved me so much time!" },
+                                { name: "Sneha Patel", college: "IISc Bangalore", avatar: "SP", rating: 5, color: "bg-emerald-500", text: "Real-time nearby properties using my location was incredible. Found a great hostel 500m from campus that I would have never found otherwise." },
+                                { name: "Rohan Gupta", college: "BITS Pilani", avatar: "RG", rating: 4, color: "bg-amber-500", text: "The landlord was responsive and the booking process was seamless. Highly recommend for any student looking for accommodation near campus." },
+                                { name: "Ananya Krishnan", college: "Anna University", avatar: "AK", rating: 5, color: "bg-purple-500", text: "As a girl student, the verified listings and safety features gave my parents peace of mind. The chat feature to message landlords is brilliant!" },
+                                { name: "Vikram Singh", college: "NIT Trichy", avatar: "VS", rating: 5, color: "bg-rose-500", text: "The price filters and Best Match scores helped me find a furnished PG within my budget near campus. Highly recommend to all NIT students!" },
+                                // Duplicates for infinite loop
+                                { name: "Priya Sharma", college: "IIT Bombay", avatar: "PS", rating: 5, color: "bg-pink-500", text: "Found my PG in 10 minutes! The verified badges gave me confidence. Moved in within 3 days of booking. Absolutely love Dormify!" },
+                                { name: "Arjun Mehta", college: "Delhi University", avatar: "AM", rating: 5, color: "bg-blue-500", text: "The comparison feature is a game changer. I compared 3 PGs side by side and picked the best one. Saved me so much time!" },
+                                { name: "Sneha Patel", college: "IISc Bangalore", avatar: "SP", rating: 5, color: "bg-emerald-500", text: "Real-time nearby properties using my location was incredible. Found a great hostel 500m from campus that I would have never found otherwise." },
+                                { name: "Rohan Gupta", college: "BITS Pilani", avatar: "RG", rating: 4, color: "bg-amber-500", text: "The landlord was responsive and the booking process was seamless. Highly recommend for any student looking for accommodation near campus." },
+                            ].map((review, i) => (
+                                <div key={i} className="w-80 flex-shrink-0 bg-white dark:bg-slate-900 rounded-2xl p-6 border border-gray-100 dark:border-slate-800 shadow-lg">
+                                    <div className="flex gap-0.5 mb-4">
+                                        {[1, 2, 3, 4, 5].map(s => (
+                                            <svg key={s} className={`w-4 h-4 ${s <= review.rating ? "text-amber-400 fill-current" : "text-gray-200"}`} viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" /></svg>
+                                        ))}
+                                    </div>
+                                    <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed line-clamp-4 italic">"{review.text}"</p>
+                                    <div className="flex items-center gap-3 mt-5 pt-4 border-t border-gray-100 dark:border-slate-800">
+                                        <div className={`w-10 h-10 rounded-full ${review.color} flex items-center justify-center text-white font-bold text-sm`}>{review.avatar}</div>
+                                        <div>
+                                            <p className="font-bold text-gray-900 dark:text-white text-sm">{review.name}</p>
+                                            <p className="text-xs text-gray-500">{review.college}</p>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
-                    </motion.div>
-                </div>
-            </section>
+                            ))}
+                        </motion.div>
+                    </div>
+                </section>
 
-            {/* ==================== CTA ==================== */}
-            <section className="py-24 px-6">
-                <ScrollRevealSection>
-                    <div className="max-w-4xl mx-auto text-center relative">
-                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl blur-3xl opacity-10" />
+                {/* ==================== CTA ==================== */}
+                <section className="py-24 px-6">
+                    <ScrollRevealSection>
+                        <div className="max-w-4xl mx-auto text-center relative">
+                            <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl blur-3xl opacity-10" />
 
-                        <div className="relative bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl p-12 md:p-16 overflow-hidden">
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-                            <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+                            <div className="relative bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl p-12 md:p-16 overflow-hidden">
+                                <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+                                <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
 
-                            <h2 className="relative text-3xl md:text-4xl font-display font-bold text-white mb-4">
-                                {t("readyToFind")}
-                            </h2>
-                            <p className="relative text-indigo-200 max-w-md mx-auto mb-8">
-                                {t("joinThousands")}
-                            </p>
-                            <div className="relative flex flex-col sm:flex-row justify-center gap-4">
-                                <Link to="/listings">
-                                    <motion.button
-                                        whileHover={{ scale: 1.05 }}
-                                        whileTap={{ scale: 0.95 }}
-                                        className="px-8 py-4 rounded-2xl bg-white text-indigo-600 font-semibold shadow-xl hover:shadow-2xl transition-all duration-300"
-                                    >
-                                        {t("browseListings")}
-                                    </motion.button>
-                                </Link>
-                                <Link to="/register">
-                                    <motion.button
-                                        whileHover={{ scale: 1.05 }}
-                                        whileTap={{ scale: 0.95 }}
-                                        className="px-8 py-4 rounded-2xl bg-white/10 text-white font-semibold border border-white/20 hover:bg-white/20 transition-all duration-300"
-                                    >
-                                        {t("createAccount")}
-                                    </motion.button>
-                                </Link>
+                                <h2 className="relative text-3xl md:text-4xl font-display font-bold text-white mb-4">
+                                    {t("readyToFind")}
+                                </h2>
+                                <p className="relative text-indigo-200 max-w-md mx-auto mb-8">
+                                    {t("joinThousands")}
+                                </p>
+                                <div className="relative flex flex-col sm:flex-row justify-center gap-4">
+                                    <Link to="/listings">
+                                        <motion.button
+                                            whileHover={{ scale: 1.05 }}
+                                            whileTap={{ scale: 0.95 }}
+                                            className="px-8 py-4 rounded-2xl bg-white text-indigo-600 font-semibold shadow-xl hover:shadow-2xl transition-all duration-300"
+                                        >
+                                            {t("browseListings")}
+                                        </motion.button>
+                                    </Link>
+                                    <Link to="/register">
+                                        <motion.button
+                                            whileHover={{ scale: 1.05 }}
+                                            whileTap={{ scale: 0.95 }}
+                                            className="px-8 py-4 rounded-2xl bg-white/10 text-white font-semibold border border-white/20 hover:bg-white/20 transition-all duration-300"
+                                        >
+                                            {t("createAccount")}
+                                        </motion.button>
+                                    </Link>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </ScrollRevealSection>
-            </section>
-            
+                    </ScrollRevealSection>
+                </section>
+
             </div> {/* END ANTIGRAVITY SLIDE-OVER WRAPPER */}
 
             <Footer />

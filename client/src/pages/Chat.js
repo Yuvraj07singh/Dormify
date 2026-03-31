@@ -6,8 +6,9 @@ import { io } from "socket.io-client";
 import { AuthContext } from "../context/AuthContext";
 import { LanguageContext } from "../context/LanguageContext";
 import Footer from "../components/Footer";
+import API_URL from "../config/api";
 
-const SOCKET_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+const SOCKET_URL = API_URL;
 
 function Chat() {
     const navigate = useNavigate();
@@ -156,7 +157,7 @@ function Chat() {
             <div className="pt-24 pb-0 px-0 md:px-6" style={{ height: "calc(100vh - 0px)" }}>
                 <div className="max-w-7xl mx-auto h-full">
                     <div className="grid grid-cols-1 md:grid-cols-12 h-full rounded-3xl overflow-hidden border border-gray-200 dark:border-slate-800 shadow-2xl bg-white dark:bg-slate-900">
-                        
+
                         {/* Conversations List */}
                         <div className={`md:col-span-4 lg:col-span-3 border-r border-gray-200 dark:border-slate-800 flex flex-col ${activeConversation ? "hidden md:flex" : "flex"}`}>
                             <div className="p-4 border-b border-gray-200 dark:border-slate-800 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-slate-900 dark:to-slate-800">
@@ -196,9 +197,8 @@ function Chat() {
                                                     animate={{ opacity: 1, x: 0 }}
                                                     transition={{ delay: i * 0.05 }}
                                                     onClick={() => openConversation(conv)}
-                                                    className={`p-4 cursor-pointer transition-all duration-200 border-b border-gray-100 dark:border-slate-800 hover:bg-indigo-50/50 dark:hover:bg-slate-800/50 ${
-                                                        activeConversation?._id === conv._id ? "bg-indigo-50 dark:bg-slate-800 border-l-4 border-l-indigo-500" : ""
-                                                    }`}
+                                                    className={`p-4 cursor-pointer transition-all duration-200 border-b border-gray-100 dark:border-slate-800 hover:bg-indigo-50/50 dark:hover:bg-slate-800/50 ${activeConversation?._id === conv._id ? "bg-indigo-50 dark:bg-slate-800 border-l-4 border-l-indigo-500" : ""
+                                                        }`}
                                                 >
                                                     <div className="flex items-start gap-3">
                                                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
@@ -306,11 +306,10 @@ function Chat() {
                                                             animate={{ opacity: 1, y: 0 }}
                                                             className={`flex ${isOwn ? "justify-end" : "justify-start"}`}
                                                         >
-                                                            <div className={`max-w-[70%] px-4 py-2.5 rounded-2xl ${
-                                                                isOwn
+                                                            <div className={`max-w-[70%] px-4 py-2.5 rounded-2xl ${isOwn
                                                                     ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-br-md"
                                                                     : "bg-white dark:bg-slate-800 text-gray-800 dark:text-white border border-gray-100 dark:border-slate-700 rounded-bl-md shadow-sm"
-                                                            }`}>
+                                                                }`}>
                                                                 {!isOwn && (
                                                                     <p className={`text-[10px] font-bold mb-1 ${isOwn ? "text-indigo-200" : "text-indigo-500"}`}>
                                                                         {msg.sender?.name || "User"}

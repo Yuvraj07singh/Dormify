@@ -5,8 +5,9 @@ import { motion } from "framer-motion";
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { AuthContext } from "../context/AuthContext";
 import toast from "react-hot-toast";
+import API_URL from "../config/api";
 
-const API = process.env.REACT_APP_API_URL || "http://localhost:5000";
+const API = API_URL;
 
 const COLORS = ["#6366f1", "#10b981", "#f59e0b", "#ef4444"];
 
@@ -66,17 +67,17 @@ export default function AdminDashboard() {
 
     const handleKyc = async (userId, docUrl, currentStatus) => {
         if (currentStatus !== "pending") return;
-        
+
         // Show the document to admin
         window.open(docUrl, '_blank');
-        
+
         const action = window.prompt("Type 'approve' to verify, or type a rejection reason to reject:");
         if (!action) return;
 
         try {
             const status = action.toLowerCase() === 'approve' ? 'verified' : 'rejected';
             const reason = status === 'rejected' ? action : '';
-            
+
             await axios.put(`${API}/api/admin/kyc/${userId}`, { status, reason });
             toast.success(`KYC ${status}`);
             loadAll();

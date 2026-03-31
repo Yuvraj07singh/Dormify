@@ -3,8 +3,9 @@ import { Link } from "react-router-dom";
 import axios from "axios";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
+import API_URL from "../config/api";
 
-const API = process.env.REACT_APP_API_URL || "http://localhost:5000";
+const API = API_URL;
 
 export default function ForgotPassword() {
     const [email, setEmail] = useState("");

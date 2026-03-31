@@ -8,6 +8,7 @@ import * as turf from "@turf/turf";
 import { GeoJSON } from "react-leaflet";
 import { LanguageContext } from "../context/LanguageContext";
 import { LocationContext } from "../context/LocationContext";
+import API_URL from "../config/api";
 
 // Leaflet defaults fix
 delete L.Icon.Default.prototype._getIconUrl;
@@ -50,7 +51,7 @@ function NearbyMap() {
     const navigate = useNavigate();
     const { t } = useContext(LanguageContext);
     const { location, fetchLocation, isLocating, error, address, searchLocation, searchSuggestions, setSearchSuggestions, isSearching, setManualLocation } = useContext(LocationContext);
-    
+
     const [dbProperties, setDbProperties] = useState([]);
     const [liveProperties, setLiveProperties] = useState([]);
     const [loadingData, setLoadingData] = useState(false);
@@ -103,7 +104,6 @@ function NearbyMap() {
             setLoadingData(true);
             try {
                 // Fetch our DB Properties with Spatial Query
-                const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
                 const resDb = await fetch(`${API_URL}/api/property?lat=${location.lat}&lng=${location.lng}&radius=5000`);
                 let data = await resDb.json();
                 if (Array.isArray(data)) {
@@ -122,7 +122,7 @@ function NearbyMap() {
                 // Fetch Real-time Live Data (OSM Overpass API within 5km)
                 const query = `[out:json];(node["tourism"="hotel"](around:5000,${location.lat},${location.lng});node["tourism"="hostel"](around:5000,${location.lat},${location.lng});node["building"="dormitory"](around:5000,${location.lat},${location.lng});node["building"="apartments"](around:5000,${location.lat},${location.lng}););out 15;`;
                 const osmRes = await axios.get(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
-                
+
                 if (osmRes.data && osmRes.data.elements) {
                     const live = osmRes.data.elements.map(el => ({
                         id: `osm-${el.id}`,
@@ -136,7 +136,7 @@ function NearbyMap() {
                     })).sort((a, b) => a.distance - b.distance);
                     setLiveProperties(live);
                 }
-            } catch (err) { console.error("Data fetch error", err); } 
+            } catch (err) { console.error("Data fetch error", err); }
             finally { setLoadingData(false); }
         };
         fetchData();
@@ -255,7 +255,7 @@ function NearbyMap() {
                             </div>
                             <span className="text-sm font-medium text-gray-600 dark:text-gray-400">📍 Showing data for: {address}</span>
                         </div>
-                        
+
                         <div className="grid lg:grid-cols-3 gap-6">
                             <div className="lg:col-span-2 h-[500px] rounded-3xl overflow-hidden shadow-2xl border border-gray-200 dark:border-slate-700 relative">
                                 {loadingData && <div className="absolute inset-0 z-[1000] bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm flex items-center justify-center"><div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" /></div>}
@@ -269,17 +269,17 @@ function NearbyMap() {
 
                                     {/* GIS Spatial Boundary Box */}
                                     {searchZone && (
-                                        <GeoJSON 
+                                        <GeoJSON
                                             key={location.lat + "-" + location.lng}
-                                            data={searchZone} 
-                                            style={{ 
-                                                color: '#6366f1', 
-                                                weight: 2, 
-                                                opacity: 0.6, 
-                                                fillColor: '#6366f1', 
+                                            data={searchZone}
+                                            style={{
+                                                color: '#6366f1',
+                                                weight: 2,
+                                                opacity: 0.6,
+                                                fillColor: '#6366f1',
                                                 fillOpacity: 0.05,
-                                                dashArray: "5, 10" 
-                                            }} 
+                                                dashArray: "5, 10"
+                                            }}
                                         />
                                     )}
 
@@ -290,12 +290,11 @@ function NearbyMap() {
                                                     {p.images?.[0] && <img src={p.images[0]} alt="" className="w-full h-24 object-cover rounded-lg mb-2" />}
                                                     <div className="flex items-center gap-1 mb-1">
                                                         {p.isLive ? <span className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 text-[10px] font-bold uppercase">Live Sensor Data</span> : (
-                                                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${
-                                                                p.source === "99acres" ? "bg-blue-100 text-blue-700" :
-                                                                p.source === "JustDial" ? "bg-yellow-100 text-yellow-700" :
-                                                                p.source === "MagicBricks" ? "bg-red-100 text-red-700" :
-                                                                "bg-indigo-100 text-indigo-700"
-                                                            }`}>{p.source || "Verified"}</span>
+                                                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${p.source === "99acres" ? "bg-blue-100 text-blue-700" :
+                                                                    p.source === "JustDial" ? "bg-yellow-100 text-yellow-700" :
+                                                                        p.source === "MagicBricks" ? "bg-red-100 text-red-700" :
+                                                                            "bg-indigo-100 text-indigo-700"
+                                                                }`}>{p.source || "Verified"}</span>
                                                         )}
                                                     </div>
                                                     <h4 className="font-bold text-sm text-gray-800 mb-1 line-clamp-1">{p.title}</h4>
@@ -324,11 +323,10 @@ function NearbyMap() {
                                                 {p.isLive ? (
                                                     <span className="text-[10px] font-bold text-emerald-500 px-1.5 py-0.5 bg-emerald-50 rounded">LIVE OSM</span>
                                                 ) : p.source && (
-                                                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                                                        p.source === "99acres" ? "text-blue-500 bg-blue-50" :
-                                                        p.source === "JustDial" ? "text-yellow-600 bg-yellow-50" :
-                                                        "text-red-500 bg-red-50"
-                                                    }`}>{p.source}</span>
+                                                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${p.source === "99acres" ? "text-blue-500 bg-blue-50" :
+                                                            p.source === "JustDial" ? "text-yellow-600 bg-yellow-50" :
+                                                                "text-red-500 bg-red-50"
+                                                        }`}>{p.source}</span>
                                                 )}
                                             </div>
                                             <p className="text-sm font-bold mt-1 text-gray-700 dark:text-gray-300">₹{p.price?.toLocaleString("en-IN")}/mo</p>

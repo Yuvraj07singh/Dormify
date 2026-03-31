@@ -12,6 +12,7 @@ import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
 import toast from "react-hot-toast";
 import { Helmet } from "react-helmet-async";
+import API_URL from "../config/api";
 
 function ScrollRevealDiv({ children, className = "", delay = 0 }) {
     const [ref, isRevealed] = useScrollReveal({ threshold: 0.1 });
@@ -45,7 +46,7 @@ function PropertyDetail() {
     const [inquiryStatus, setInquiryStatus] = useState(""); // "", "loading", "success"
 
     useEffect(() => {
-        const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
         axios.get(`${API_URL}/api/property/${id}`)
             .then(res => { setProperty(res.data); setLoading(false); })
             .catch(() => setLoading(false));
@@ -86,7 +87,7 @@ function PropertyDetail() {
         if (!user) { navigate("/login"); return; }
         try {
             setBookingStatus("loading");
-            const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
 
             // Calculate total amount
             const start = new Date(bookingForm.moveInDate);
@@ -127,7 +128,7 @@ function PropertyDetail() {
         e.preventDefault();
         if (!user) { navigate("/login"); return; }
         try {
-            const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
             const res = await axios.post(`${API_URL}/api/property/${id}/review`, reviewForm);
             setProperty(res.data);
             setReviewForm({ rating: 5, comment: "" });
@@ -328,12 +329,12 @@ function PropertyDetail() {
                                     <form onSubmit={handleReview} className="mt-6 p-6 rounded-2xl bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800">
                                         <h3 className="font-semibold text-gray-800 dark:text-white mb-4">{t("writeReview")}</h3>
                                         <div className="flex gap-2 mb-4">
-                                            {[1,2,3,4,5].map(n => (
-                                                <button key={n} type="button" onClick={() => setReviewForm({...reviewForm, rating: n})}
+                                            {[1, 2, 3, 4, 5].map(n => (
+                                                <button key={n} type="button" onClick={() => setReviewForm({ ...reviewForm, rating: n })}
                                                     className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg transition-all ${n <= reviewForm.rating ? "bg-amber-400 text-white shadow-lg" : "bg-gray-200 dark:bg-slate-700 text-gray-400"}`}>★</button>
                                             ))}
                                         </div>
-                                        <textarea value={reviewForm.comment} onChange={e => setReviewForm({...reviewForm, comment: e.target.value})} placeholder={t("shareExperience")}
+                                        <textarea value={reviewForm.comment} onChange={e => setReviewForm({ ...reviewForm, comment: e.target.value })} placeholder={t("shareExperience")}
                                             className="input-field mb-4 h-24 resize-none" required />
                                         <button type="submit" className="btn-primary">{t("submitReview")}</button>
                                         {reviewStatus === "success" && <p className="mt-2 text-sm text-emerald-500">{t("reviewSubmitted")}</p>}
@@ -351,15 +352,15 @@ function PropertyDetail() {
                                     <form onSubmit={handleBooking} className="space-y-4">
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("moveInDate")}</label>
-                                            <input type="date" value={bookingForm.moveInDate} onChange={e => setBookingForm({...bookingForm, moveInDate: e.target.value})} className="input-field" required />
+                                            <input type="date" value={bookingForm.moveInDate} onChange={e => setBookingForm({ ...bookingForm, moveInDate: e.target.value })} className="input-field" required />
                                         </div>
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("moveOutDate")}</label>
-                                            <input type="date" value={bookingForm.moveOutDate} onChange={e => setBookingForm({...bookingForm, moveOutDate: e.target.value})} className="input-field" required />
+                                            <input type="date" value={bookingForm.moveOutDate} onChange={e => setBookingForm({ ...bookingForm, moveOutDate: e.target.value })} className="input-field" required />
                                         </div>
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("messageOptional")}</label>
-                                            <textarea value={bookingForm.message} onChange={e => setBookingForm({...bookingForm, message: e.target.value})} placeholder={t("introduceSelf")}
+                                            <textarea value={bookingForm.message} onChange={e => setBookingForm({ ...bookingForm, message: e.target.value })} placeholder={t("introduceSelf")}
                                                 className="input-field h-24 resize-none" />
                                         </div>
                                         <button type="submit" className="btn-primary w-full" disabled={bookingStatus === "loading" || bookingStatus === "Waiting for payment..."}>
@@ -388,7 +389,7 @@ function PropertyDetail() {
                                             onClick={async () => {
                                                 if (!user) { navigate("/login"); return; }
                                                 try {
-                                                    const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
                                                     await axios.post(`${API_URL}/api/chat/start`, {
                                                         landlordId: property.owner._id,
                                                         propertyId: id
@@ -417,7 +418,7 @@ function PropertyDetail() {
                         </motion.div>
                     </div>
                 </div>
-            </div> 
+            </div>
 
             <Lightbox
                 open={lightboxOpen}
@@ -459,7 +460,7 @@ function PropertyDetail() {
                                 className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-8 overflow-y-auto max-h-[90vh]"
                             >
                                 <button onClick={() => setInquiryOpen(false)} className="absolute top-5 right-5 w-9 h-9 rounded-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-colors">✕</button>
-                                
+
                                 <div className="mb-6">
                                     <div className="w-12 h-12 rounded-2xl bg-indigo-100 dark:bg-indigo-500/10 flex items-center justify-center text-2xl mb-3">💬</div>
                                     <h3 className="text-xl font-bold text-gray-900 dark:text-white">Quick Inquiry</h3>
@@ -478,7 +479,7 @@ function PropertyDetail() {
                                         e.preventDefault();
                                         setInquiryStatus("loading");
                                         try {
-                                            const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
                                             await axios.post(`${API_URL}/api/inquiry`, { propertyId: property._id, ...inquiryForm });
                                             setInquiryStatus("success");
                                         } catch (err) {
@@ -489,24 +490,24 @@ function PropertyDetail() {
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
                                                 <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">Name *</label>
-                                                <input required value={inquiryForm.name} onChange={(e) => setInquiryForm(p => ({...p, name: e.target.value}))} className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-white border border-gray-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 font-medium" placeholder="Your name" />
+                                                <input required value={inquiryForm.name} onChange={(e) => setInquiryForm(p => ({ ...p, name: e.target.value }))} className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-white border border-gray-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 font-medium" placeholder="Your name" />
                                             </div>
                                             <div>
                                                 <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">Phone</label>
-                                                <input value={inquiryForm.phone} onChange={(e) => setInquiryForm(p => ({...p, phone: e.target.value}))} className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-white border border-gray-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 font-medium" placeholder="Optional" />
+                                                <input value={inquiryForm.phone} onChange={(e) => setInquiryForm(p => ({ ...p, phone: e.target.value }))} className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-white border border-gray-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 font-medium" placeholder="Optional" />
                                             </div>
                                         </div>
                                         <div>
                                             <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">Email *</label>
-                                            <input required type="email" value={inquiryForm.email} onChange={(e) => setInquiryForm(p => ({...p, email: e.target.value}))} className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-white border border-gray-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 font-medium" placeholder="your@email.com" />
+                                            <input required type="email" value={inquiryForm.email} onChange={(e) => setInquiryForm(p => ({ ...p, email: e.target.value }))} className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-white border border-gray-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 font-medium" placeholder="your@email.com" />
                                         </div>
                                         <div>
                                             <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">Preferred Move-in Date</label>
-                                            <input type="date" value={inquiryForm.moveInDate} onChange={(e) => setInquiryForm(p => ({...p, moveInDate: e.target.value}))} className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-white border border-gray-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 font-medium" />
+                                            <input type="date" value={inquiryForm.moveInDate} onChange={(e) => setInquiryForm(p => ({ ...p, moveInDate: e.target.value }))} className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-white border border-gray-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 font-medium" />
                                         </div>
                                         <div>
                                             <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">Message *</label>
-                                            <textarea required rows={4} value={inquiryForm.message} onChange={(e) => setInquiryForm(p => ({...p, message: e.target.value}))} className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-white border border-gray-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 font-medium resize-none" placeholder="Hi, I'm interested in this property and would like to know more about..." />
+                                            <textarea required rows={4} value={inquiryForm.message} onChange={(e) => setInquiryForm(p => ({ ...p, message: e.target.value }))} className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-white border border-gray-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 font-medium resize-none" placeholder="Hi, I'm interested in this property and would like to know more about..." />
                                         </div>
                                         <button type="submit" disabled={inquiryStatus === "loading"} className="w-full py-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold hover:from-indigo-500 hover:to-purple-500 transition-all shadow-lg shadow-indigo-500/30 disabled:opacity-70">
                                             {inquiryStatus === "loading" ? "Sending..." : "Send Inquiry →"}
