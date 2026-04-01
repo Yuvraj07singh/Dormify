@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const RoommateProfile = require("../models/RoommateProfile");
-const { protect } = require("../middleware/auth");
+const authMiddleware = require("../middleware/authMiddleware");
 const { validateRequest, sanitizeBody, schemas } = require("../middleware/validate");
 
 // Apply sanitization to all POST/PUT requests
@@ -30,7 +30,7 @@ router.get("/", async (req, res) => {
 });
 
 // GET my profile
-router.get("/mine", protect, async (req, res) => {
+router.get("/mine", authMiddleware, async (req, res) => {
     try {
         const profile = await RoommateProfile.findOne({ user: req.user._id })
             .populate("user", "name profileImage university");
@@ -41,7 +41,7 @@ router.get("/mine", protect, async (req, res) => {
 });
 
 // POST create or update my profile (upsert)
-router.post("/", protect, validateRequest(schemas.roommateProfile), async (req, res) => {
+router.post("/", authMiddleware, validateRequest(schemas.roommateProfile), async (req, res) => {
     try {
         const profile = await RoommateProfile.findOneAndUpdate(
             { user: req.user._id },
@@ -55,7 +55,7 @@ router.post("/", protect, validateRequest(schemas.roommateProfile), async (req, 
 });
 
 // DELETE deactivate my profile
-router.delete("/", protect, async (req, res) => {
+router.delete("/", authMiddleware, async (req, res) => {
     try {
         await RoommateProfile.findOneAndUpdate({ user: req.user._id }, { isActive: false });
         res.json({ success: true, message: "Profile deactivated" });
