@@ -81,6 +81,103 @@ router.get("/", cacheMiddleware, asyncHandler(async (req, res) => {
     res.json({ data: properties, total, page: p, pages: Math.ceil(total / lim) });
 }));
 
+// BUDGET ANALYZER STATS (server-side aggregation — no more pulling all properties to browser)
+router.get("/stats/budget", asyncHandler(async (req, res) => {
+    const { city, propertyType, furnished, maxBudget } = req.query;
+    const budget = Number(maxBudget) || 20000;
+    const BRACKET_SIZE = 2000;
+
+    // Base filter
+    const filter = { isAvailable: true };
+    if (city) filter.city = new RegExp(city, "i");
+    if (propertyType) filter.propertyType = propertyType;
+    if (furnished === "true") filter.furnished = true;
+
+    // Run all aggregations in parallel
+    const [
+        totalCount,
+        affordableCount,
+        avgPriceResult,
+        brackets,
+        topPicks,
+        unlockAt2K,
+        unlockAt5K
+    ] = await Promise.all([
+        // Total matching properties
+        Property.countDocuments(filter),
+
+        // Affordable (within budget)
+        Property.countDocuments({ ...filter, price: { $lte: budget } }),
+
+        // Average price of affordable listings
+        Property.aggregate([
+            { $match: { ...filter, price: { $lte: budget } } },
+            { $group: { _id: null, avg: { $avg: "$price" }, min: { $min: "$price" }, max: { $max: "$price" } } }
+        ]),
+
+        // Price distribution in brackets
+        Property.aggregate([
+            { $match: filter },
+            {
+                $bucket: {
+                    groupBy: "$price",
+                    boundaries: Array.from({ length: 11 }, (_, i) => i * BRACKET_SIZE),
+                    default: "20000+",
+                    output: { count: { $sum: 1 } }
+                }
+            }
+        ]),
+
+        // Top 3 affordable picks by rating
+        Property.find({ ...filter, price: { $lte: budget } })
+            .sort({ averageRating: -1 })
+            .limit(3)
+            .select("title city price images averageRating propertyType furnished")
+            .lean(),
+
+        // How many more at +₹2K
+        Property.countDocuments({ ...filter, price: { $gt: budget, $lte: budget + 2000 } }),
+
+        // How many more at +₹5K
+        Property.countDocuments({ ...filter, price: { $gt: budget, $lte: budget + 5000 } }),
+    ]);
+
+    const avgStats = avgPriceResult[0] || { avg: 0, min: 0, max: 0 };
+    const affordPct = totalCount > 0 ? Math.round((affordableCount / totalCount) * 100) : 0;
+
+    // Normalize brackets
+    const normalizedBrackets = [];
+    for (let i = 0; i < 10; i++) {
+        const low = i * BRACKET_SIZE;
+        const high = (i + 1) * BRACKET_SIZE;
+        const found = brackets.find(b => b._id === low);
+        normalizedBrackets.push({
+            low, high,
+            count: found ? found.count : 0,
+            isAffordable: high <= budget,
+        });
+    }
+    // Handle overflow bucket
+    const overflow = brackets.find(b => b._id === "20000+");
+    if (overflow) {
+        normalizedBrackets.push({ low: 20000, high: 99999, count: overflow.count, isAffordable: budget >= 20000 });
+    }
+
+    res.json({
+        budget,
+        totalCount,
+        affordableCount,
+        affordPct,
+        avgPrice: Math.round(avgStats.avg || 0),
+        minPrice: avgStats.min || 0,
+        maxPrice: avgStats.max || 0,
+        brackets: normalizedBrackets,
+        topPicks,
+        unlockAt2K,
+        unlockAt5K,
+    });
+}));
+
 // GET FEATURED PROPERTIES
 router.get("/featured", asyncHandler(async (req, res) => {
     const properties = await Property.find({ isAvailable: true })
@@ -124,7 +221,7 @@ router.post("/add", authMiddleware, validateRequest(schemas.addProperty), asyncH
 }));
 
 // UPDATE PROPERTY
-router.put("/:id", authMiddleware, asyncHandler(async (req, res) => {
+router.put("/:id", authMiddleware, validateRequest(schemas.updateProperty), asyncHandler(async (req, res) => {
     const property = await Property.findById(req.params.id);
     if (!property) return res.status(404).json({ message: "Property not found" });
     if (property.owner.toString() !== req.user.id && req.user.role !== "admin") {

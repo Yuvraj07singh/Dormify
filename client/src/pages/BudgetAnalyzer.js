@@ -77,77 +77,55 @@ function BudgetAnalyzer() {
     const [analyzed, setAnalyzed] = useState(false);
     const [loading, setLoading] = useState(false);
     const [results, setResults] = useState(null);
-    const [allProperties, setAllProperties] = useState([]);
-
-    useEffect(() => {
-        const fetchAll = async () => {
-            try {
-                const res = await fetch(`${API_URL}/api/property?limit=100`);
-                const data = await res.json();
-                const list = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
-                setAllProperties(list);
-            } catch (e) { console.error(e); }
-        };
-        fetchAll();
-    }, []);
 
     const analyze = async () => {
         if (!budget || isNaN(budget) || Number(budget) < 1000) return;
         setLoading(true);
-        await new Promise(r => setTimeout(r, 800));
 
         const b = Number(budget);
         const cityAvg = CITY_AVERAGES[city] || 8000;
 
-        // Filter affordable properties from REAL site data only
-        let affordable = allProperties.filter(p => p.price <= b);
-        if (type) affordable = affordable.filter(p => p.propertyType === type);
-        if (furnished) affordable = affordable.filter(p => p.furnished);
+        try {
+            // Use server-side aggregation — no more pulling all properties to the browser
+            const params = new URLSearchParams({ maxBudget: b, city });
+            if (type) params.append("propertyType", type);
+            if (furnished) params.append("furnished", "true");
 
-        const totalCount = allProperties.length;
-        const affordPct = totalCount > 0 ? Math.round((affordable.length / totalCount) * 100) : 0;
+            const res = await fetch(`${API_URL}/api/property/stats/budget?${params}`);
+            const stats = await res.json();
 
-        const avgPrice = affordable.length > 0
-            ? Math.round(affordable.reduce((s, p) => s + p.price, 0) / affordable.length)
-            : 0;
+            const vsCityAvg = b - cityAvg;
+            const savings = stats.avgPrice > 0 ? b - stats.avgPrice : 0;
+            const maxBracketCount = Math.max(...(stats.brackets || []).map(bk => bk.count), 1);
 
-        const savings = avgPrice > 0 ? b - avgPrice : 0;
-        const vsCityAvg = b - cityAvg;
-        const topPicks = [...affordable].sort((a, b_) => b_.averageRating - a.averageRating).slice(0, 3);
+            // Suggestions based on real server data
+            const suggestions = [];
+            if (b < cityAvg) suggestions.push({ type: "warning", text: `Your budget (₹${b.toLocaleString("en-IN")}) is ₹${(cityAvg - b).toLocaleString("en-IN")} below ${city}'s average rent of ₹${cityAvg.toLocaleString("en-IN")}/mo. Shared rooms or hostels are your best bet.` });
+            if (b >= cityAvg * 1.5) suggestions.push({ type: "success", text: `Strong budget! ₹${(b - cityAvg).toLocaleString("en-IN")} above the ${city} average — you can comfortably afford premium or private rooms.` });
+            if (stats.unlockAt2K > 0) suggestions.push({ type: "tip", text: `Increasing by just ₹2,000 unlocks ${stats.unlockAt2K} more listing${stats.unlockAt2K > 1 ? 's' : ''} on Dormify.` });
+            if (stats.affordableCount < 3 && stats.totalCount > 0) suggestions.push({ type: "warning", text: `Only ${stats.affordableCount} listing${stats.affordableCount !== 1 ? 's' : ''} match your budget. Try relaxing filters or bumping up by ₹3,000–₹5,000.` });
+            if (stats.avgPrice > 0 && savings > 0) suggestions.push({ type: "success", text: `The average affordable listing (₹${stats.avgPrice.toLocaleString("en-IN")}/mo) leaves you ₹${savings.toLocaleString("en-IN")} of breathing room — great for security deposits.` });
 
-        // Build REAL price distribution from actual listing data (₹2K brackets)
-        const BRACKET_SIZE = 2000;
-        const allPrices = allProperties.map(p => p.price).filter(Boolean);
-        const maxPrice = allPrices.length > 0 ? Math.max(...allPrices) : b * 2;
-        const numBrackets = Math.min(10, Math.ceil(maxPrice / BRACKET_SIZE));
-        const brackets = [];
-        for (let i = 0; i < numBrackets; i++) {
-            const low = i * BRACKET_SIZE;
-            const high = (i + 1) * BRACKET_SIZE;
-            const count = allProperties.filter(p => p.price > low && p.price <= high).filter(p => {
-                if (type && p.propertyType !== type) return false;
-                if (furnished && !p.furnished) return false;
-                return true;
-            }).length;
-            brackets.push({ low, high, count, isAffordable: high <= b });
+            setResults({
+                affordPct: stats.affordPct,
+                affordableCount: stats.affordableCount,
+                avgPrice: stats.avgPrice,
+                savings,
+                vsCityAvg,
+                cityAvg,
+                topPicks: stats.topPicks || [],
+                suggestions,
+                b,
+                city,
+                brackets: stats.brackets || [],
+                maxBracketCount,
+                unlockAt2K: stats.unlockAt2K,
+                unlockAt5K: stats.unlockAt5K,
+            });
+            setAnalyzed(true);
+        } catch (e) {
+            console.error("Budget analysis failed:", e);
         }
-        const maxBracketCount = Math.max(...brackets.map(bk => bk.count), 1);
-
-        // Budget unlock: how many more listings at +₹2K and +₹5K
-        const unlockAt2K = allProperties.filter(p => p.price > b && p.price <= b + 2000).length;
-        const unlockAt5K = allProperties.filter(p => p.price > b && p.price <= b + 5000).length;
-
-        // Suggestions based only on REAL housing data
-        const suggestions = [];
-        if (b < cityAvg) suggestions.push({ type: "warning", text: `Your budget (₹${b.toLocaleString("en-IN")}) is ₹${(cityAvg - b).toLocaleString("en-IN")} below ${city}'s average rent of ₹${cityAvg.toLocaleString("en-IN")}/mo. Shared rooms or hostels are your best bet.` });
-        if (b >= cityAvg * 1.5) suggestions.push({ type: "success", text: `Strong budget! ₹${(b - cityAvg).toLocaleString("en-IN")} above the ${city} average — you can comfortably afford premium or private rooms.` });
-        if (unlockAt2K > 0) suggestions.push({ type: "tip", text: `Increasing by just ₹2,000 unlocks ${unlockAt2K} more listing${unlockAt2K > 1 ? 's' : ''} on Dormify.` });
-        if (affordable.length < 3 && allProperties.length > 0) suggestions.push({ type: "warning", text: `Only ${affordable.length} listing${affordable.length !== 1 ? 's' : ''} match your budget right now. Try relaxing filters or bumping up by ₹${unlockAt5K > 0 ? '5,000' : '3,000'}.` });
-        if (avgPrice > 0 && savings > 0) suggestions.push({ type: "success", text: `The average affordable listing (₹${avgPrice.toLocaleString("en-IN")}/mo) leaves you ₹${savings.toLocaleString("en-IN")} of your budget as breathing room — great for security deposits.` });
-        if (furnished) suggestions.push({ type: "tip", text: `Furnished filter active — furnished rooms typically cost 15–25% more. Removing it could unlock ${allProperties.filter(p => p.price <= b && !p.furnished).length} additional listings.` });
-
-        setResults({ affordPct, affordable, avgPrice, savings, vsCityAvg, cityAvg, topPicks, suggestions, b, city, brackets, maxBracketCount, unlockAt2K, unlockAt5K });
-        setAnalyzed(true);
         setLoading(false);
     };
 
@@ -297,7 +275,7 @@ function BudgetAnalyzer() {
                             {/* Main stats row */}
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
                                 {[
-                                    { label: "Affordable Listings", value: results.affordable.length, unit: "properties", color: "#6366f1" },
+                                    { label: "Affordable Listings", value: results.affordableCount, unit: "properties", color: "#6366f1" },
                                     { label: "Avg. Affordable Price", value: results.avgPrice ? `₹${results.avgPrice.toLocaleString("en-IN")}` : "N/A", unit: "/month", color: "#10b981" },
                                     { label: "vs City Average", value: results.vsCityAvg >= 0 ? `+₹${results.vsCityAvg.toLocaleString("en-IN")}` : `-₹${Math.abs(results.vsCityAvg).toLocaleString("en-IN")}`, unit: "above/below avg", color: results.vsCityAvg >= 0 ? "#10b981" : "#ef4444" },
                                     { label: "Potential Monthly Savings", value: results.savings > 0 ? `₹${results.savings.toLocaleString("en-IN")}` : "₹0", unit: "if you pick avg price", color: "#f59e0b" },
@@ -445,7 +423,7 @@ function BudgetAnalyzer() {
                             {/* CTA */}
                             <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl p-6 md:p-8 text-center shadow-xl shadow-indigo-500/25">
                                 <h3 className="text-xl md:text-2xl font-bold text-white mb-2">
-                                    {results.affordable.length > 0 ? `${results.affordable.length} properties waiting for you!` : "Explore all listings"}
+                                    {results.affordableCount > 0 ? `${results.affordableCount} properties waiting for you!` : "Explore all listings"}
                                 </h3>
                                 <p className="text-indigo-100 text-sm mb-6">Browse verified properties that match your budget and preferences.</p>
                                 <Link to={`/listings?${type ? `propertyType=${type}&` : ""}${furnished ? "furnished=true&" : ""}maxPrice=${budget}`}

@@ -2,6 +2,10 @@ const express = require("express");
 const router = express.Router();
 const RoommateProfile = require("../models/RoommateProfile");
 const { protect } = require("../middleware/auth");
+const { validateRequest, sanitizeBody, schemas } = require("../middleware/validate");
+
+// Apply sanitization to all POST/PUT requests
+router.use(sanitizeBody);
 
 // GET all active profiles (with optional city/budget filter)
 router.get("/", async (req, res) => {
@@ -37,7 +41,7 @@ router.get("/mine", protect, async (req, res) => {
 });
 
 // POST create or update my profile (upsert)
-router.post("/", protect, async (req, res) => {
+router.post("/", protect, validateRequest(schemas.roommateProfile), async (req, res) => {
     try {
         const profile = await RoommateProfile.findOneAndUpdate(
             { user: req.user._id },

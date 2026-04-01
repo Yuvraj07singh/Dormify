@@ -49,6 +49,14 @@ if (process.env.NODE_ENV !== "test") {
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
+// ─── Security: NoSQL Injection Prevention + HTTP Param Pollution ───
+const mongoSanitize = require("express-mongo-sanitize");
+const hpp = require("hpp");
+const { sanitizeBody } = require("./middleware/validate");
+app.use(mongoSanitize());  // Strips $ and . from req.body/query/params
+app.use(hpp());             // Prevents parameter pollution (?sort=a&sort=b)
+app.use(sanitizeBody);      // Strips HTML tags and XSS vectors from all text inputs
+
 // ─── Rate Limiting ─────────────────────────────────────────────────
 const globalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
