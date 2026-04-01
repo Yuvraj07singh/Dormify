@@ -51,10 +51,10 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 // ─── Security: NoSQL Injection Prevention + HTTP Param Pollution ───
 const mongoSanitize = require("express-mongo-sanitize");
-// const hpp = require("hpp"); // Temporarily disabled: Incompatible with Express 5.x read-only req.query
+const hpp = require("hpp");
 const { sanitizeBody } = require("./middleware/validate");
 app.use(mongoSanitize());  // Strips $ and . from req.body/query/params
-// app.use(hpp());             // Prevents parameter pollution (?sort=a&sort=b)
+app.use(hpp());             // Prevents parameter pollution (?sort=a&sort=b)
 app.use(sanitizeBody);      // Strips HTML tags and XSS vectors from all text inputs
 
 // ─── Rate Limiting ─────────────────────────────────────────────────
