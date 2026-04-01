@@ -9,25 +9,25 @@ import { Link } from "react-router-dom";
 
 const LIFESTYLE_OPTIONS = {
     sleepSchedule: [
-        { value: "early-bird", label: "Early Bird", icon: "🌅" },
-        { value: "night-owl", label: "Night Owl", icon: "🦉" },
-        { value: "flexible", label: "Flexible", icon: "⏰" },
+        { value: "early-bird", label: "Early Bird" },
+        { value: "night-owl", label: "Night Owl" },
+        { value: "flexible", label: "Flexible" },
     ],
     diet: [
-        { value: "veg", label: "Vegetarian", icon: "🥗" },
-        { value: "non-veg", label: "Non-Veg", icon: "🍗" },
-        { value: "vegan", label: "Vegan", icon: "🌱" },
-        { value: "any", label: "No Preference", icon: "🍽️" },
+        { value: "veg", label: "Vegetarian" },
+        { value: "non-veg", label: "Non-Veg" },
+        { value: "vegan", label: "Vegan" },
+        { value: "any", label: "No Preference" },
     ],
     cleanliness: [
-        { value: "very-clean", label: "Very Clean", icon: "✨" },
-        { value: "average", label: "Average", icon: "🧹" },
-        { value: "relaxed", label: "Relaxed", icon: "😌" },
+        { value: "very-clean", label: "Very Clean" },
+        { value: "average", label: "Average" },
+        { value: "relaxed", label: "Relaxed" },
     ],
     studyHabits: [
-        { value: "quiet-studious", label: "Quiet & Studious", icon: "📚" },
-        { value: "social", label: "Social", icon: "🎉" },
-        { value: "balanced", label: "Balanced", icon: "⚖️" },
+        { value: "quiet-studious", label: "Quiet & Studious" },
+        { value: "social", label: "Social" },
+        { value: "balanced", label: "Balanced" },
     ],
 };
 
@@ -109,7 +109,7 @@ function ChipSelect({ options, value, onChange, label }) {
                                 : "bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300 hover:border-indigo-300"
                         }`}
                     >
-                        <span>{opt.icon}</span> {opt.label}
+                        {opt.icon && <span>{opt.icon}</span>} {opt.label}
                     </button>
                 ))}
             </div>
@@ -164,29 +164,29 @@ function ProfileCard({ profile, myProfile, onMessage }) {
                 <div className="flex flex-wrap gap-1.5 mb-4">
                     {ls.sleepSchedule && ls.sleepSchedule !== "flexible" && (
                         <span className="px-2 py-1 rounded-lg bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 text-xs font-semibold">
-                            {ls.sleepSchedule === "early-bird" ? "🌅 Early Bird" : "🦉 Night Owl"}
+                            {ls.sleepSchedule === "early-bird" ? "Early Bird" : "Night Owl"}
                         </span>
                     )}
                     {ls.diet && ls.diet !== "any" && (
                         <span className="px-2 py-1 rounded-lg bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-400 text-xs font-semibold capitalize">
-                            {ls.diet === "veg" ? "🥗 Veg" : ls.diet === "vegan" ? "🌱 Vegan" : "🍗 Non-Veg"}
+                            {ls.diet === "veg" ? "Veg" : ls.diet === "vegan" ? "Vegan" : "Non-Veg"}
                         </span>
                     )}
                     {ls.cleanliness === "very-clean" && (
-                        <span className="px-2 py-1 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 text-xs font-semibold">✨ Very Clean</span>
+                        <span className="px-2 py-1 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 text-xs font-semibold">Very Clean</span>
                     )}
                     {ls.smoking && (
-                        <span className="px-2 py-1 rounded-lg bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 text-xs font-semibold">🚬 Smoker</span>
+                        <span className="px-2 py-1 rounded-lg bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 text-xs font-semibold">Smoker</span>
                     )}
                     {!ls.smoking && (
-                        <span className="px-2 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-xs font-semibold">🚭 Non-Smoker</span>
+                        <span className="px-2 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-xs font-semibold">Non-Smoker</span>
                     )}
                     {ls.workFromHome && (
-                        <span className="px-2 py-1 rounded-lg bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-400 text-xs font-semibold">💻 WFH</span>
+                        <span className="px-2 py-1 rounded-lg bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-400 text-xs font-semibold">WFH</span>
                     )}
                     {ls.studyHabits && ls.studyHabits !== "balanced" && (
                         <span className="px-2 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 text-xs font-semibold">
-                            {ls.studyHabits === "quiet-studious" ? "📚 Studious" : "🎉 Social"}
+                            {ls.studyHabits === "quiet-studious" ? "Studious" : "Social"}
                         </span>
                     )}
                 </div>
@@ -300,11 +300,7 @@ export default function RoommateFinder() {
             <div className="pt-24 pb-8 px-4 md:px-6 bg-gradient-to-br from-purple-50 via-indigo-50 to-white dark:from-slate-900 dark:via-purple-950/20 dark:to-slate-950">
                 <div className="max-w-5xl mx-auto text-center">
                     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-100 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/20 mb-6">
-                            <span className="text-lg">🤝</span>
-                            <span className="text-sm font-semibold text-purple-700 dark:text-purple-300">Exclusive to Dormify</span>
-                        </div>
-                        <h1 className="text-3xl md:text-5xl font-display font-bold text-gray-900 dark:text-white leading-tight">
+                        <h1 className="text-3xl md:text-5xl font-display font-bold text-gray-900 dark:text-white leading-tight mt-6">
                             Find Your <span className="bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">Perfect Roommate</span>
                         </h1>
                         <p className="mt-4 text-base md:text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
@@ -353,7 +349,9 @@ export default function RoommateFinder() {
                                 </div>
                             ) : displayProfiles.length === 0 ? (
                                 <div className="bg-white dark:bg-slate-900 rounded-3xl py-20 text-center border border-gray-100 dark:border-slate-800 shadow-sm">
-                                    <div className="w-20 h-20 bg-gray-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">🔍</div>
+                                    <div className="w-20 h-20 bg-gray-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                                    </div>
                                     <p className="text-xl font-bold text-gray-800 dark:text-white mb-2">No roommate profiles yet</p>
                                     <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">Be the first to create a profile and start matching!</p>
                                     <button onClick={() => { if (!user) { toast.error("Sign in first"); return; } setTab("create"); }}
@@ -425,7 +423,9 @@ export default function RoommateFinder() {
                                 {/* Lifestyle */}
                                 <div className="space-y-5">
                                     <h3 className="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
-                                        <span className="w-8 h-8 rounded-xl bg-purple-100 dark:bg-purple-500/10 flex items-center justify-center text-sm">🎭</span>
+                                        <span className="w-8 h-8 rounded-xl bg-purple-100 dark:bg-purple-500/10 flex items-center justify-center">
+                                            <svg className="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                        </span>
                                         Lifestyle
                                     </h3>
                                     <ChipSelect label="Sleep Schedule" options={LIFESTYLE_OPTIONS.sleepSchedule} value={form.lifestyle.sleepSchedule} onChange={v => updateLifestyle("sleepSchedule", v)} />
@@ -435,15 +435,15 @@ export default function RoommateFinder() {
 
                                     <div className="flex flex-wrap gap-6">
                                         {[
-                                            { key: "smoking", label: "Smoker", icon: "🚬" },
-                                            { key: "pets", label: "Has Pets", icon: "🐾" },
-                                            { key: "workFromHome", label: "Work from Home", icon: "💻" },
+                                            { key: "smoking", label: "Smoker", icon: "" },
+                                            { key: "pets", label: "Has Pets", icon: "" },
+                                            { key: "workFromHome", label: "Work from Home", icon: "" },
                                         ].map(toggle => (
                                             <label key={toggle.key} className="flex items-center gap-3 cursor-pointer" onClick={() => updateLifestyle(toggle.key, !form.lifestyle[toggle.key])}>
                                                 <div className={`w-10 h-6 rounded-full px-1 flex items-center transition-colors duration-300 ${form.lifestyle[toggle.key] ? "bg-indigo-600" : "bg-gray-300 dark:bg-slate-600"}`}>
                                                     <motion.div animate={{ x: form.lifestyle[toggle.key] ? 16 : 0 }} className="w-4 h-4 rounded-full bg-white shadow-md" />
                                                 </div>
-                                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{toggle.icon} {toggle.label}</span>
+                                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{toggle.icon && `${toggle.icon} `}{toggle.label}</span>
                                             </label>
                                         ))}
                                     </div>

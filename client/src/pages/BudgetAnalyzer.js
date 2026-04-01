@@ -6,12 +6,12 @@ import Footer from "../components/Footer";
 import API_URL from "../config/api";
 
 const TIPS = [
-    { icon: "🍜", title: "Cook at home", desc: "Save ₹3,000–₹5,000/month vs eating out daily." },
-    { icon: "🚌", title: "Use public transport", desc: "Living near a bus/metro stop cuts commute cost by 60%." },
-    { icon: "🤝", title: "Share with a roommate", desc: "Split rent and utilities to halve your housing cost." },
-    { icon: "📶", title: "Negotiate WiFi", desc: "Ask landlord to include WiFi in rent — saves ₹500–₹800/mo." },
-    { icon: "💡", title: "Monitor utilities", desc: "Furnished PGs include electricity — prioritize them." },
-    { icon: "📦", title: "Move off-peak", desc: "Moving Nov–Jan gets you 15–20% cheaper rents." },
+    { icon: <svg className="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>, title: "Cook at home", desc: "Save ₹3,000–₹5,000/month vs eating out daily." },
+    { icon: <svg className="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>, title: "Use public transport", desc: "Living near a bus/metro stop cuts commute cost by 60%." },
+    { icon: <svg className="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>, title: "Share with a roommate", desc: "Split rent and utilities to halve your housing cost." },
+    { icon: <svg className="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" /></svg>, title: "Negotiate WiFi", desc: "Ask landlord to include WiFi in rent — saves ₹500–₹800/mo." },
+    { icon: <svg className="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>, title: "Monitor utilities", desc: "Furnished PGs include electricity — prioritize them." },
+    { icon: <svg className="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>, title: "Move off-peak", desc: "Moving Nov–Jan gets you 15–20% cheaper rents." },
 ];
 
 const CITY_AVERAGES = {
@@ -139,10 +139,6 @@ function BudgetAnalyzer() {
             <div className="pt-24 pb-10 px-4 md:px-6 bg-gradient-to-br from-indigo-50 via-purple-50 to-white dark:from-slate-900 dark:via-indigo-950/30 dark:to-slate-950">
                 <div className="max-w-4xl mx-auto text-center">
                     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-100 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 mb-6">
-                            <span className="text-lg">🧮</span>
-                            <span className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">Exclusive to Dormify</span>
-                        </div>
                         <h1 className="text-3xl md:text-5xl font-display font-bold text-gray-900 dark:text-white leading-tight">
                             Smart <span className="gradient-text">Budget Analyzer</span>
                         </h1>
@@ -236,7 +232,7 @@ function BudgetAnalyzer() {
                                             Analyzing your budget...
                                         </>
                                     ) : (
-                                        <>🧮 Analyze My Budget</>
+                                        <>Analyze My Budget</>
                                     )}
                                 </motion.button>
                             </div>
@@ -244,9 +240,9 @@ function BudgetAnalyzer() {
                             {/* How it works */}
                             <div className="grid md:grid-cols-3 gap-4 mt-8">
                                 {[
-                                    { icon: "📊", title: "Market Comparison", desc: "See how your budget stacks up against city averages" },
-                                    { icon: "🏠", title: "Affordability Score", desc: "Know what % of listings you can actually afford" },
-                                    { icon: "💡", title: "Smart Tips", desc: "Personalized money-saving recommendations just for students" },
+                                    { icon: <svg className="w-6 h-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>, title: "Market Comparison", desc: "See how your budget stacks up against city averages" },
+                                    { icon: <svg className="w-6 h-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>, title: "Affordability Score", desc: "Know what % of listings you can actually afford" },
+                                    { icon: <svg className="w-6 h-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>, title: "Smart Tips", desc: "Personalized money-saving recommendations just for students" },
                                 ].map((f, i) => (
                                     <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 + 0.3 }}
                                         className="bg-gray-50 dark:bg-slate-900/50 rounded-2xl p-5 border border-gray-100 dark:border-slate-800">
@@ -368,8 +364,16 @@ function BudgetAnalyzer() {
                                                 s.type === "success" ? "bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-800 dark:text-emerald-300" :
                                                 "bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 text-indigo-800 dark:text-indigo-300"
                                             }`}>
-                                            <span className="text-base">{s.type === "warning" ? "⚠️" : s.type === "success" ? "✅" : "💡"}</span>
-                                            <p>{s.text}</p>
+                                        <div className="shrink-0 pt-0.5">
+                                            {s.type === "warning" ? (
+                                                <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                                            ) : s.type === "success" ? (
+                                                <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                                            ) : (
+                                                <svg className="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                            )}
+                                        </div>
+                                        <p>{s.text}</p>
                                         </motion.div>
                                     ))}
                                 </div>
@@ -378,7 +382,10 @@ function BudgetAnalyzer() {
                             {/* Top Picks */}
                             {results.topPicks.length > 0 && (
                                 <div>
-                                    <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4">🏆 Top Picks Within Your Budget</h3>
+                                    <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
+                                        <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+                                        Top Picks Within Your Budget
+                                    </h3>
                                     <div className="grid md:grid-cols-3 gap-4">
                                         {results.topPicks.map((p, i) => (
                                             <Link key={p._id} to={`/property/${p._id}`}>
@@ -392,7 +399,10 @@ function BudgetAnalyzer() {
                                                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{p.city}</p>
                                                         <div className="flex items-center justify-between mt-2">
                                                             <span className="text-indigo-600 dark:text-indigo-400 font-bold text-sm">₹{p.price?.toLocaleString("en-IN")}/mo</span>
-                                                            <span className="text-xs text-amber-500">⭐ {p.averageRating || "New"}</span>
+                                                            <span className="text-xs font-semibold text-amber-500 flex items-center gap-1">
+                                                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                                                {p.averageRating || "New"}
+                                                            </span>
                                                         </div>
                                                         <div className="mt-2 text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
                                                             Save ₹{(Number(budget) - p.price).toLocaleString("en-IN")}/mo vs budget
@@ -407,7 +417,10 @@ function BudgetAnalyzer() {
 
                             {/* Money Saving Tips */}
                             <div>
-                                <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4">💰 Student Money-Saving Tips</h3>
+                                <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
+                                    <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    Student Money-Saving Tips
+                                </h3>
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                                     {TIPS.map((tip, i) => (
                                         <motion.div key={i} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.06 }}

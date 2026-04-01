@@ -79,6 +79,7 @@ function Navbar() {
     };
 
     const handleLogoClick = () => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
         setWinking(true);
         setTimeout(() => setWinking(false), 900);
     };
@@ -127,7 +128,7 @@ function Navbar() {
                         transition={{ duration: 0.6, ease: "easeInOut" }}
                         className="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-xl shadow-lg shadow-indigo-500/30 font-extrabold text-lg"
                     >
-                        {winking ? "😉" : "D"}
+                        D
                     </motion.div>
                     <span className="text-lg md:text-xl font-display font-bold text-gray-900 dark:text-white tracking-tight">
                         Dormify
@@ -142,7 +143,7 @@ function Navbar() {
                             <Link
                                 key={link.path}
                                 to={link.path}
-                                className={`relative flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 group ${
+                                className={`relative flex items-center gap-1.5 px-4 h-10 rounded-xl text-sm font-semibold transition-all duration-200 group ${
                                     isActive(link.path)
                                         ? "text-white"
                                         : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
@@ -164,7 +165,7 @@ function Navbar() {
                         <div className="relative" ref={moreRef}>
                             <button
                                 onClick={() => { setMoreMenuOpen(!moreMenuOpen); setUserMenuOpen(false); setLangMenuOpen(false); }}
-                                className={`relative flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                                className={`relative flex items-center gap-1.5 px-4 h-10 rounded-xl text-sm font-semibold transition-all duration-200 ${
                                     anyMoreActive
                                         ? "text-white"
                                         : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
@@ -242,7 +243,7 @@ function Navbar() {
                         whileTap={{ scale: 0.97 }}
                         onClick={fetchLocation}
                         disabled={isLocating}
-                        className="hidden lg:flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all bg-white/80 dark:bg-slate-800/80 border border-gray-200/80 dark:border-slate-700 text-gray-700 dark:text-gray-300 hover:border-indigo-300 dark:hover:border-indigo-500/50 hover:text-indigo-600 dark:hover:text-indigo-400 shadow-sm backdrop-blur-sm disabled:opacity-60"
+                        className="hidden lg:flex items-center gap-1.5 px-4 h-10 rounded-xl text-sm font-semibold transition-all bg-white/80 dark:bg-slate-800/80 border border-gray-200/80 dark:border-slate-700 text-gray-700 dark:text-gray-300 hover:border-indigo-300 dark:hover:border-indigo-500/50 hover:text-indigo-600 dark:hover:text-indigo-400 shadow-sm backdrop-blur-sm disabled:opacity-60"
                         title="Click to detect location"
                     >
                         {isLocating ? (
@@ -262,7 +263,7 @@ function Navbar() {
                             whileHover={{ scale: 1.08 }}
                             whileTap={{ scale: 0.92 }}
                             onClick={() => { setLangMenuOpen(!langMenuOpen); setUserMenuOpen(false); setMoreMenuOpen(false); }}
-                            className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-gray-200/80 dark:border-slate-700 flex items-center justify-center text-base shadow-sm hover:border-indigo-300 dark:hover:border-indigo-500/50 transition-all"
+                            className="w-10 h-10 rounded-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-gray-200/80 dark:border-slate-700 flex items-center justify-center text-base shadow-sm hover:border-indigo-300 dark:hover:border-indigo-500/50 transition-all"
                             title="Language"
                         >
                             {currentLang?.flag || "🌐"}
@@ -307,7 +308,7 @@ function Navbar() {
                         whileHover={{ scale: 1.08, rotate: dark ? -15 : 15 }}
                         whileTap={{ scale: 0.92 }}
                         onClick={toggleTheme}
-                        className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-gray-200/80 dark:border-slate-700 flex items-center justify-center text-gray-600 dark:text-gray-300 shadow-sm hover:border-indigo-300 dark:hover:border-indigo-500/50 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all"
+                        className="w-10 h-10 rounded-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-gray-200/80 dark:border-slate-700 flex items-center justify-center text-gray-600 dark:text-gray-300 shadow-sm hover:border-indigo-300 dark:hover:border-indigo-500/50 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all"
                         title="Toggle theme"
                     >
                         <AnimatePresence mode="wait">
@@ -330,7 +331,7 @@ function Navbar() {
                                 whileHover={{ scale: 1.04 }}
                                 whileTap={{ scale: 0.96 }}
                                 onClick={() => { setUserMenuOpen(!userMenuOpen); setLangMenuOpen(false); setMoreMenuOpen(false); }}
-                                className="flex items-center gap-2 pl-1 pr-3 py-1 rounded-2xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-gray-200/80 dark:border-slate-700 shadow-sm hover:border-indigo-300 dark:hover:border-indigo-500/50 transition-all"
+                                className="flex items-center gap-2 pl-1 pr-3 h-10 rounded-2xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-gray-200/80 dark:border-slate-700 shadow-sm hover:border-indigo-300 dark:hover:border-indigo-500/50 transition-all"
                             >
                                 <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md shadow-indigo-500/30">
                                     <span className="text-white text-sm font-bold">{user.name?.charAt(0).toUpperCase()}</span>
@@ -404,7 +405,7 @@ function Navbar() {
                         <div className="hidden md:flex items-center gap-2">
                             <Link
                                 to="/login"
-                                className="px-4 py-2 rounded-xl text-sm font-semibold text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100/80 dark:hover:bg-slate-800/80 transition-all duration-200"
+                                className="px-4 h-10 flex items-center justify-center rounded-xl text-sm font-semibold text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100/80 dark:hover:bg-slate-800/80 transition-all duration-200"
                             >
                                 {t("signIn")}
                             </Link>
@@ -412,7 +413,7 @@ function Navbar() {
                                 <motion.button
                                     whileHover={{ scale: 1.04, boxShadow: "0 8px 25px rgba(99,102,241,0.4)" }}
                                     whileTap={{ scale: 0.96 }}
-                                    className="px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 shadow-lg shadow-indigo-500/25 transition-all duration-200"
+                                    className="px-5 h-10 flex items-center justify-center rounded-xl text-sm font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 shadow-lg shadow-indigo-500/25 transition-all duration-200"
                                 >
                                     {t("getStarted")} →
                                 </motion.button>
