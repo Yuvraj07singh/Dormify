@@ -92,6 +92,7 @@ function Navbar() {
     ];
 
     const moreLinks = [
+        { path: "/roommate-finder", label: "Roommates", icon: ICONS.profile, desc: "Find your perfect match" },
         { path: "/pricing", label: "Pricing", icon: ICONS.pricing, desc: "Compare our plans" },
         { path: "/compare", label: "Compare", icon: ICONS.compare, desc: "Side-by-side properties" },
         ...(user ? [{ path: "/chat", label: "Messages", icon: ICONS.chat, desc: "Chat with landlords" }] : []),

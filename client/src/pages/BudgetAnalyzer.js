@@ -99,23 +99,7 @@ function BudgetAnalyzer() {
         const b = Number(budget);
         const cityAvg = CITY_AVERAGES[city] || 8000;
 
-        // City-specific realistic student living costs (per month in ₹)
-        const CITY_COSTS = {
-            Mumbai:    { food: 5500, transport: 1500, utilities: 1200 },
-            Delhi:     { food: 4500, transport: 1200, utilities: 900 },
-            Bangalore: { food: 5000, transport: 1000, utilities: 1000 },
-            Hyderabad: { food: 4000, transport: 800,  utilities: 800 },
-            Pune:      { food: 4000, transport: 700,  utilities: 800 },
-            Chennai:   { food: 3500, transport: 700,  utilities: 700 },
-            Kolkata:   { food: 3000, transport: 600,  utilities: 600 },
-            Ahmedabad: { food: 3000, transport: 600,  utilities: 600 },
-            Jaipur:    { food: 2800, transport: 500,  utilities: 500 },
-            Lucknow:   { food: 2500, transport: 500,  utilities: 500 },
-            Other:     { food: 3500, transport: 700,  utilities: 700 },
-        };
-        const cityCosts = CITY_COSTS[city] || CITY_COSTS.Other;
-
-        // Filter affordable properties from real site data
+        // Filter affordable properties from REAL site data only
         let affordable = allProperties.filter(p => p.price <= b);
         if (type) affordable = affordable.filter(p => p.propertyType === type);
         if (furnished) affordable = affordable.filter(p => p.furnished);
@@ -123,50 +107,46 @@ function BudgetAnalyzer() {
         const totalCount = allProperties.length;
         const affordPct = totalCount > 0 ? Math.round((affordable.length / totalCount) * 100) : 0;
 
-        // Real avg price from site data
         const avgPrice = affordable.length > 0
             ? Math.round(affordable.reduce((s, p) => s + p.price, 0) / affordable.length)
             : 0;
 
-        // Smart rent: use actual avg listing price if available, else fall back to city-appropriate estimate
-        const rentAmount = avgPrice > 0 ? avgPrice : Math.min(b * 0.60, cityAvg);
-        const rentPct = Math.round((rentAmount / b) * 100);
-
-        // Remaining after rent
-        const afterRent = Math.max(0, b - rentAmount);
-
-        // Cap each category to city realistic max, then fit within remaining budget
-        const rawFood = Math.min(cityCosts.food, afterRent * 0.55);
-        const rawTransport = Math.min(cityCosts.transport, afterRent * 0.20);
-        // Furnished = utilities often included in rent
-        const rawUtilities = furnished ? Math.min(300, afterRent * 0.05) : Math.min(cityCosts.utilities, afterRent * 0.18);
-        const rawMisc = Math.max(0, afterRent - rawFood - rawTransport - rawUtilities);
-
-        const breakdown = {
-            rent: Math.round(rentAmount),
-            food: Math.round(rawFood),
-            transport: Math.round(rawTransport),
-            utilities: Math.round(rawUtilities),
-            misc: Math.round(rawMisc),
-            rentPct,
-            rentSource: avgPrice > 0 ? "Based on actual listings" : "Estimated",
-            afterRent: Math.round(afterRent),
-        };
-
-        const savings = b - rentAmount;
+        const savings = avgPrice > 0 ? b - avgPrice : 0;
         const vsCityAvg = b - cityAvg;
         const topPicks = [...affordable].sort((a, b_) => b_.averageRating - a.averageRating).slice(0, 3);
 
-        // Smart personalized suggestions
-        const suggestions = [];
-        if (b < cityAvg) suggestions.push({ type: "warning", text: `Your budget (₹${b.toLocaleString("en-IN")}) is ₹${(cityAvg - b).toLocaleString("en-IN")} below ${city}'s average rent of ₹${cityAvg.toLocaleString("en-IN")}/mo. Consider shared rooms or hostels.` });
-        if (b >= cityAvg * 1.5) suggestions.push({ type: "success", text: `Great! Your budget gives you ₹${(b - cityAvg).toLocaleString("en-IN")} above the ${city} average — you can comfortably afford premium or private rooms.` });
-        if (!furnished && avgPrice > 0) suggestions.push({ type: "tip", text: `Unfurnished rooms are typically 15–25% cheaper. Your ₹${b.toLocaleString("en-IN")} budget goes further without the furnished filter.` });
-        if (affordable.length < 5 && allProperties.length > 0) suggestions.push({ type: "tip", text: `Only ${affordable.length} listings match your criteria. Try increasing budget by ₹2,000–₹3,000 or removing type filters to see more options.` });
-        if (afterRent < cityCosts.food) suggestions.push({ type: "warning", text: `After rent, you'd have ₹${Math.round(afterRent).toLocaleString("en-IN")} left — which is below the typical ${city} student food budget of ₹${cityCosts.food.toLocaleString("en-IN")}. A shared room could free up ₹2,000–₹5,000/mo.` });
-        if (furnished) suggestions.push({ type: "tip", text: `Furnished rooms often bundle WiFi and utilities — your utilities estimate is kept low (₹${Math.round(rawUtilities).toLocaleString("en-IN")}) since these are typically included.` });
+        // Build REAL price distribution from actual listing data (₹2K brackets)
+        const BRACKET_SIZE = 2000;
+        const allPrices = allProperties.map(p => p.price).filter(Boolean);
+        const maxPrice = allPrices.length > 0 ? Math.max(...allPrices) : b * 2;
+        const numBrackets = Math.min(10, Math.ceil(maxPrice / BRACKET_SIZE));
+        const brackets = [];
+        for (let i = 0; i < numBrackets; i++) {
+            const low = i * BRACKET_SIZE;
+            const high = (i + 1) * BRACKET_SIZE;
+            const count = allProperties.filter(p => p.price > low && p.price <= high).filter(p => {
+                if (type && p.propertyType !== type) return false;
+                if (furnished && !p.furnished) return false;
+                return true;
+            }).length;
+            brackets.push({ low, high, count, isAffordable: high <= b });
+        }
+        const maxBracketCount = Math.max(...brackets.map(bk => bk.count), 1);
 
-        setResults({ affordPct, affordable, avgPrice, savings, vsCityAvg, cityAvg, topPicks, breakdown, suggestions, b, city, cityCosts });
+        // Budget unlock: how many more listings at +₹2K and +₹5K
+        const unlockAt2K = allProperties.filter(p => p.price > b && p.price <= b + 2000).length;
+        const unlockAt5K = allProperties.filter(p => p.price > b && p.price <= b + 5000).length;
+
+        // Suggestions based only on REAL housing data
+        const suggestions = [];
+        if (b < cityAvg) suggestions.push({ type: "warning", text: `Your budget (₹${b.toLocaleString("en-IN")}) is ₹${(cityAvg - b).toLocaleString("en-IN")} below ${city}'s average rent of ₹${cityAvg.toLocaleString("en-IN")}/mo. Shared rooms or hostels are your best bet.` });
+        if (b >= cityAvg * 1.5) suggestions.push({ type: "success", text: `Strong budget! ₹${(b - cityAvg).toLocaleString("en-IN")} above the ${city} average — you can comfortably afford premium or private rooms.` });
+        if (unlockAt2K > 0) suggestions.push({ type: "tip", text: `Increasing by just ₹2,000 unlocks ${unlockAt2K} more listing${unlockAt2K > 1 ? 's' : ''} on Dormify.` });
+        if (affordable.length < 3 && allProperties.length > 0) suggestions.push({ type: "warning", text: `Only ${affordable.length} listing${affordable.length !== 1 ? 's' : ''} match your budget right now. Try relaxing filters or bumping up by ₹${unlockAt5K > 0 ? '5,000' : '3,000'}.` });
+        if (avgPrice > 0 && savings > 0) suggestions.push({ type: "success", text: `The average affordable listing (₹${avgPrice.toLocaleString("en-IN")}/mo) leaves you ₹${savings.toLocaleString("en-IN")} of your budget as breathing room — great for security deposits.` });
+        if (furnished) suggestions.push({ type: "tip", text: `Furnished filter active — furnished rooms typically cost 15–25% more. Removing it could unlock ${allProperties.filter(p => p.price <= b && !p.furnished).length} additional listings.` });
+
+        setResults({ affordPct, affordable, avgPrice, savings, vsCityAvg, cityAvg, topPicks, suggestions, b, city, brackets, maxBracketCount, unlockAt2K, unlockAt5K });
         setAnalyzed(true);
         setLoading(false);
     };
@@ -331,7 +311,7 @@ function BudgetAnalyzer() {
                                 ))}
                             </div>
 
-                            {/* Gauge + Breakdown */}
+                            {/* Gauge + Price Distribution */}
                             <div className="grid md:grid-cols-2 gap-4">
                                 {/* Gauge */}
                                 <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-sm p-6 flex flex-col items-center justify-center">
@@ -342,34 +322,49 @@ function BudgetAnalyzer() {
                                          results.affordPct >= 30 ? "Moderate. Explore shared rooms to unlock more options." :
                                          "Limited. Consider increasing budget or switching to shared rooms."}
                                     </p>
+                                    {results.unlockAt2K > 0 && (
+                                        <div className="mt-4 w-full px-4 py-3 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 text-center">
+                                            <p className="text-xs font-bold text-indigo-700 dark:text-indigo-300">+₹2,000 unlocks {results.unlockAt2K} more listing{results.unlockAt2K > 1 ? 's' : ''}</p>
+                                        </div>
+                                    )}
                                 </div>
 
-                                {/* Monthly Budget Breakdown */}
+                                {/* Real Price Distribution from actual listings */}
                                 <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-sm p-6">
-                                    <div className="flex items-start justify-between mb-5">
-                                        <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300">Suggested Monthly Breakdown</h3>
-                                        <span className={`text-[10px] px-2 py-1 rounded-lg font-bold ${
-                                            results.breakdown.rentSource === "Based on actual listings"
-                                                ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                                                : "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                                        }`}>
-                                            {results.breakdown.rentSource === "Based on actual listings" ? "✦ Real data" : "Estimated"}
-                                        </span>
+                                    <div className="flex items-start justify-between mb-1">
+                                        <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300">Price Distribution</h3>
+                                        <span className="text-[10px] px-2 py-1 rounded-lg font-bold bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">✦ Real site data</span>
                                     </div>
-                                    <div className="space-y-4">
-                                        <Bar label={`🏠 Rent (${results.breakdown.rentPct}%)`} value={results.breakdown.rent} max={results.b} color="#6366f1" />
-                                        {results.breakdown.rentSource === "Based on actual listings" && (
-                                            <p className="text-[10px] text-indigo-500 font-medium -mt-2 ml-0.5">↑ Based on avg. listing price across {results.affordable.length} properties on Dormify</p>
-                                        )}
-                                        <Bar label={`🍜 Food (${Math.round(results.breakdown.food/results.b*100)}%)`} value={results.breakdown.food} max={results.b} color="#10b981" />
-                                        <p className="text-[10px] text-gray-400 -mt-2 ml-0.5">~₹{Math.round(results.breakdown.food/30).toLocaleString("en-IN")}/day · {results.city} student estimate</p>
-                                        <Bar label={`🚌 Transport (${Math.round(results.breakdown.transport/results.b*100)}%)`} value={results.breakdown.transport} max={results.b} color="#f59e0b" />
-                                        <Bar label={`💡 Utilities (${Math.round(results.breakdown.utilities/results.b*100)}%)`} value={results.breakdown.utilities} max={results.b} color="#06b6d4" />
-                                        <Bar label={`🎯 Personal/Misc (${Math.round(results.breakdown.misc/results.b*100)}%)`} value={results.breakdown.misc} max={results.b} color="#8b5cf6" />
+                                    <p className="text-[11px] text-gray-400 mb-4">Number of listings in each ₹2,000 price band</p>
+                                    <div className="space-y-2">
+                                        {results.brackets.map((bk, i) => (
+                                            <div key={i} className="flex items-center gap-2">
+                                                <span className={`text-[10px] w-20 shrink-0 font-semibold ${ bk.isAffordable ? 'text-gray-600 dark:text-gray-300' : 'text-gray-400'}`}>
+                                                    ₹{(bk.low/1000).toFixed(0)}K–{(bk.high/1000).toFixed(0)}K
+                                                </span>
+                                                <div className="flex-1 h-6 bg-gray-100 dark:bg-slate-800 rounded-lg overflow-hidden relative">
+                                                    <motion.div
+                                                        initial={{ width: 0 }}
+                                                        animate={{ width: `${Math.round((bk.count / results.maxBracketCount) * 100)}%` }}
+                                                        transition={{ duration: 0.6, delay: i * 0.05 }}
+                                                        className={`h-full rounded-lg ${ bk.isAffordable ? 'bg-gradient-to-r from-indigo-500 to-purple-500' : 'bg-gray-300 dark:bg-slate-600'}`}
+                                                    />
+                                                    {/* Budget marker */}
+                                                    {bk.high > results.b && bk.low < results.b && (
+                                                        <div className="absolute top-0 bottom-0 flex items-center gap-1" style={{ left: `${((results.b - bk.low) / (bk.high - bk.low) * (bk.count / results.maxBracketCount) * 100)}%` }}>
+                                                            <div className="w-0.5 h-full bg-amber-500" />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <span className={`text-[11px] w-6 text-right font-bold shrink-0 ${ bk.isAffordable ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400'}`}>
+                                                    {bk.count}
+                                                </span>
+                                            </div>
+                                        ))}
                                     </div>
-                                    <div className="mt-5 pt-4 border-t border-gray-100 dark:border-slate-800 flex justify-between text-xs">
-                                        <span className="text-gray-400">Total accounted</span>
-                                        <span className="font-bold text-gray-700 dark:text-white">₹{(results.breakdown.rent + results.breakdown.food + results.breakdown.transport + results.breakdown.utilities + results.breakdown.misc).toLocaleString("en-IN")}</span>
+                                    <div className="flex items-center gap-4 mt-4 text-[10px] text-gray-400">
+                                        <span className="flex items-center gap-1"><span className="w-3 h-2 rounded bg-indigo-500 inline-block" /> Within budget</span>
+                                        <span className="flex items-center gap-1"><span className="w-3 h-2 rounded bg-gray-300 dark:bg-slate-600 inline-block" /> Above budget</span>
                                     </div>
                                 </div>
                             </div>

@@ -92,6 +92,7 @@ app.use("/api/admin",        require("./routes/adminRoutes"));
 app.use("/api/inquiry",      require("./routes/inquiryRoutes"));
 app.use("/api/saved-search", require("./routes/savedSearchRoutes"));
 app.use("/api/stripe",       require("./routes/stripeRoutes"));
+app.use("/api/roommate",     require("./routes/roommateRoutes"));
 
 // ─── Health Check ──────────────────────────────────────────────────
 app.get("/", (req, res) => {

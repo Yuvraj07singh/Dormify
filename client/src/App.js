@@ -16,6 +16,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ComparePage from "./pages/Compare";
 import Pricing from "./pages/Pricing";
 import BudgetAnalyzer from "./pages/BudgetAnalyzer";
+import RoommateFinder from "./pages/RoommateFinder";
 import { CompareProvider, useCompare } from "./context/CompareContext";
 
 function FloatingHomeButton() {
@@ -103,6 +104,7 @@ function App() {
                         <Route path="/admin" element={<PageTransition><AdminDashboard /></PageTransition>} />
                         <Route path="/compare" element={<PageTransition><ComparePage /></PageTransition>} />
                         <Route path="/budget-analyzer" element={<PageTransition><BudgetAnalyzer /></PageTransition>} />
+                        <Route path="/roommate-finder" element={<PageTransition><RoommateFinder /></PageTransition>} />
                     </Routes>
                 </AnimatePresence>
             </Router>
