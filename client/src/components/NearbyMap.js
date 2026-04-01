@@ -100,30 +100,33 @@ function NearbyMap() {
 
     useEffect(() => {
         if (!location) return;
-        const fetchData = async () => {
-            setLoadingData(true);
+
+        const fetchDbProperties = async () => {
             try {
-                // Fetch our DB Properties with Spatial Query
                 const resDb = await fetch(`${API_URL}/api/property?lat=${location.lat}&lng=${location.lng}&radius=5000`);
+                if (!resDb.ok) throw new Error("DB fetch failed");
                 let data = await resDb.json();
-                // Handle both paginated { data: [...] } and plain array responses
                 const dbList = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
                 setDbProperties(dbList.map(p => ({
                     ...p, distance: getDistance(location.lat, location.lng, p.latitude, p.longitude)
                 })));
+            } catch (err) {
+                console.warn("DB Properties fetch warning:", err);
+            }
+        };
 
-                // Create a 5km GeoJSON circle using Turf.js overlay
-                const center = [location.lng, location.lat];
-                const radius = 5;
-                const options = { steps: 64, units: 'kilometers', properties: { foo: 'bar' } };
-                const circlePolygon = turf.circle(center, radius, options);
-                setSearchZone(circlePolygon);
-
-                // Fetch Real-time Live Data (OSM Overpass API within 5km)
+        const fetchOsmProperties = async () => {
+            try {
                 const query = `[out:json];(node["tourism"="hotel"](around:5000,${location.lat},${location.lng});node["tourism"="hostel"](around:5000,${location.lat},${location.lng});node["building"="dormitory"](around:5000,${location.lat},${location.lng});node["building"="apartments"](around:5000,${location.lat},${location.lng}););out 15;`;
-                const osmRes = await axios.get(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
+                
+                let osmRes;
+                try {
+                    osmRes = await axios.get(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`, { timeout: 10000 });
+                } catch {
+                    osmRes = await axios.get(`https://overpass.kumi.systems/api/interpreter?data=${encodeURIComponent(query)}`, { timeout: 10000 });
+                }
 
-                if (osmRes.data && osmRes.data.elements) {
+                if (osmRes?.data?.elements) {
                     const live = osmRes.data.elements.map(el => ({
                         id: `osm-${el.id}`,
                         title: el.tags?.name || (el.tags?.tourism === "hotel" ? "Local Hotel" : "Apartment/Dormitory"),
@@ -136,10 +139,26 @@ function NearbyMap() {
                     })).sort((a, b) => a.distance - b.distance);
                     setLiveProperties(live);
                 }
-            } catch (err) { console.error("Data fetch error", err); }
-            finally { setLoadingData(false); }
+            } catch (err) {
+                console.warn("Live OSM Properties fetch warning:", err);
+            }
         };
-        fetchData();
+
+        const executeFetches = async () => {
+            setLoadingData(true);
+            
+            // Set search zone immediately
+            const center = [location.lng, location.lat];
+            const circlePolygon = turf.circle(center, 5, { steps: 64, units: 'kilometers' });
+            setSearchZone(circlePolygon);
+
+            // Fetch concurrently
+            await Promise.allSettled([fetchDbProperties(), fetchOsmProperties()]);
+            
+            setLoadingData(false);
+        };
+
+        executeFetches();
     }, [location]);
 
     const allProperties = [...dbProperties, ...liveProperties].sort((a, b) => a.distance - b.distance).slice(0, 15);

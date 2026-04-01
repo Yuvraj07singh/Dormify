@@ -112,10 +112,10 @@ function Navbar() {
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
             className="fixed top-0 left-0 right-0 z-[100] pointer-events-none"
         >
-            <div className={`pointer-events-auto mx-4 xl:mx-auto max-w-7xl flex items-center justify-between transition-all duration-500 ${
+            <div className={`pointer-events-auto mx-3 md:mx-4 xl:mx-auto max-w-7xl flex items-center justify-between transition-all duration-500 ${
                 scrolled
-                    ? "mt-3 px-4 py-2.5 rounded-[1.75rem] bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl border border-gray-200/60 dark:border-white/[0.08] shadow-[0_8px_40px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_40px_rgba(0,0,0,0.4)]"
-                    : "mt-0 px-6 py-4 rounded-none bg-transparent border-transparent"
+                    ? "mt-2 md:mt-3 px-3 md:px-4 py-2 md:py-2.5 rounded-[1.5rem] md:rounded-[1.75rem] bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl border border-gray-200/60 dark:border-white/[0.08] shadow-md dark:shadow-[0_8px_40px_rgba(0,0,0,0.4)]"
+                    : "mt-0 px-3 md:px-6 py-3 md:py-4 rounded-none bg-transparent border-transparent"
             }`}>
 
                 {/* ─── Logo ─── */}
@@ -235,7 +235,7 @@ function Navbar() {
                 </div>
 
                 {/* ─── Right Side Actions ─── */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 md:gap-2">
 
                     {/* Location Pill */}
                     <motion.button
@@ -263,7 +263,7 @@ function Navbar() {
                             whileHover={{ scale: 1.08 }}
                             whileTap={{ scale: 0.92 }}
                             onClick={() => { setLangMenuOpen(!langMenuOpen); setUserMenuOpen(false); setMoreMenuOpen(false); }}
-                            className="w-10 h-10 rounded-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-gray-200/80 dark:border-slate-700 flex items-center justify-center text-base shadow-sm hover:border-indigo-300 dark:hover:border-indigo-500/50 transition-all"
+                            className="flex w-9 h-9 md:w-10 md:h-10 rounded-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-gray-200/80 dark:border-slate-700 items-center justify-center text-base shadow-sm hover:border-indigo-300 dark:hover:border-indigo-500/50 transition-all"
                             title="Language"
                         >
                             {currentLang?.flag || "🌐"}
@@ -308,7 +308,7 @@ function Navbar() {
                         whileHover={{ scale: 1.08, rotate: dark ? -15 : 15 }}
                         whileTap={{ scale: 0.92 }}
                         onClick={toggleTheme}
-                        className="w-10 h-10 rounded-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-gray-200/80 dark:border-slate-700 flex items-center justify-center text-gray-600 dark:text-gray-300 shadow-sm hover:border-indigo-300 dark:hover:border-indigo-500/50 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all"
+                        className="flex w-9 h-9 md:w-10 md:h-10 rounded-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-gray-200/80 dark:border-slate-700 items-center justify-center text-gray-600 dark:text-gray-300 shadow-sm hover:border-indigo-300 dark:hover:border-indigo-500/50 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all"
                         title="Toggle theme"
                     >
                         <AnimatePresence mode="wait">
@@ -331,7 +331,7 @@ function Navbar() {
                                 whileHover={{ scale: 1.04 }}
                                 whileTap={{ scale: 0.96 }}
                                 onClick={() => { setUserMenuOpen(!userMenuOpen); setLangMenuOpen(false); setMoreMenuOpen(false); }}
-                                className="flex items-center gap-2 pl-1 pr-3 h-10 rounded-2xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-gray-200/80 dark:border-slate-700 shadow-sm hover:border-indigo-300 dark:hover:border-indigo-500/50 transition-all"
+                                className="flex items-center gap-1.5 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-gray-200/80 dark:border-slate-700 pl-2.5 pr-1 md:pl-3 md:pr-1.5 h-9 md:h-10 rounded-xl md:rounded-2xl shadow-sm hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-500/50 transition-all"
                             >
                                 <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md shadow-indigo-500/30">
                                     <span className="text-white text-sm font-bold">{user.name?.charAt(0).toUpperCase()}</span>
@@ -339,14 +339,11 @@ function Navbar() {
                                 <span className="hidden md:block text-sm font-semibold text-gray-800 dark:text-white max-w-[80px] truncate">
                                     {user.name?.split(" ")[0]}
                                 </span>
-                                <motion.svg
-                                    animate={{ rotate: userMenuOpen ? 180 : 0 }}
-                                    transition={{ duration: 0.2 }}
-                                    className="w-3.5 h-3.5 text-gray-400"
-                                    fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                                >
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-                                </motion.svg>
+                                <motion.div animate={{ rotate: userMenuOpen ? 180 : 0 }} className="mr-1 md:mr-1.5 text-gray-400">
+                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </motion.div>
                             </motion.button>
 
                             <AnimatePresence>
@@ -380,7 +377,7 @@ function Navbar() {
                                                 { to: `/profile/${user?._id}`, icon: ICONS.profile, label: "My Profile" },
                                             ].map((item) => (
                                                 <Link key={item.to} to={item.to} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 transition-all group">
-                                                    <div className="w-7 h-7 rounded-lg bg-gray-100 dark:bg-slate-800 flex items-center justify-center group-hover:bg-indigo-50 dark:group-hover:bg-indigo-500/10 transition-colors">
+                                                    <div className="w-7 h-7 md:w-8 md:h-8 rounded-full md:rounded-xl overflow-hidden bg-gray-100 dark:bg-slate-700 flex items-center justify-center group-hover:bg-indigo-50 dark:group-hover:bg-indigo-500/10 transition-colors">
                                                         <Icon d={item.icon} className="w-3.5 h-3.5 text-gray-500 group-hover:text-indigo-500 transition-colors" />
                                                     </div>
                                                     {item.label}
