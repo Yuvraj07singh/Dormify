@@ -32,6 +32,7 @@ function Listings() {
     const [viewMode, setViewMode] = useState("grid"); // grid | list
     const [filtersOpen, setFiltersOpen] = useState(false);
     const [advancedOpen, setAdvancedOpen] = useState(false);
+    const [selectedLive, setSelectedLive] = useState(null);
 
     // Advanced filters
     const [minBeds, setMinBeds] = useState(0);
@@ -138,35 +139,92 @@ function Listings() {
 
             // 2. Fetch Live OSM Properties if Location is set
             if (location) {
-                const query = `[out:json];(node["tourism"="hotel"](around:5000,${location.lat},${location.lng});node["tourism"="hostel"](around:5000,${location.lat},${location.lng});node["building"="dormitory"](around:5000,${location.lat},${location.lng});node["building"="apartments"](around:5000,${location.lat},${location.lng}););out 30;`;
-                const osmRes = await axios.get(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
+                try {
+                    const query = `[out:json][timeout:25];
+(
+  nwr["tourism"="hotel"](around:10000,${location.lat},${location.lng});
+  nwr["tourism"="hostel"](around:10000,${location.lat},${location.lng});
+  nwr["tourism"="guest_house"](around:10000,${location.lat},${location.lng});
+  nwr["tourism"="motel"](around:10000,${location.lat},${location.lng});
+  nwr["building"="dormitory"](around:10000,${location.lat},${location.lng});
+  nwr["building"="apartments"](around:8000,${location.lat},${location.lng});
+  nwr["building"="hotel"](around:10000,${location.lat},${location.lng});
+);
+out center 50;`;
 
-                if (osmRes.data && osmRes.data.elements) {
-                    const liveData = osmRes.data.elements.map(el => ({
-                        _id: `osm-${el.id}`,
-                        title: el.tags?.name || (el.tags?.tourism === "hotel" ? "Local Hotel" : "Nearby Accommodation"),
-                        propertyType: el.tags?.tourism === "hotel" ? "private-room" : "apartment",
-                        price: Math.floor(Math.random() * 15000) + 5000,
-                        location: "Nearby (Live Data)",
-                        city: "Sensor Area",
-                        images: ["https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=600"],
-                        bedrooms: 1,
-                        bathrooms: 1,
-                        isLive: true,
-                        averageRating: Number((Math.random() * 2 + 3).toFixed(1)),
-                        totalReviews: Math.floor(Math.random() * 100) + 1,
-                        latitude: el.lat,
-                        longitude: el.lon,
-                        distance: getDistance(location.lat, location.lng, el.lat, el.lon)
-                    }));
-
-                    let filteredLive = liveData;
-                    if (propertyType) filteredLive = filteredLive.filter(p => p.propertyType === propertyType);
-                    if (priceRange) {
-                        const [min, max] = priceRange.split("-");
-                        filteredLive = filteredLive.filter(p => p.price >= Number(min) && p.price <= (max === '999999' ? Infinity : Number(max)));
+                    let osmRes;
+                    try {
+                        osmRes = await axios.get(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`, { timeout: 15000 });
+                    } catch {
+                        osmRes = await axios.get(`https://overpass.kumi.systems/api/interpreter?data=${encodeURIComponent(query)}`, { timeout: 15000 });
                     }
-                    allData = [...allData, ...filteredLive];
+
+                    if (osmRes?.data?.elements) {
+                        const seen = new Set();
+                        const liveData = osmRes.data.elements
+                            .filter(el => {
+                                const lat = el.lat || el.center?.lat;
+                                const lon = el.lon || el.center?.lon;
+                                if (!lat || !lon) return false;
+                                const key = `${(el.tags?.name || "").toLowerCase()}-${lat.toFixed(4)}-${lon.toFixed(4)}`;
+                                if (seen.has(key)) return false;
+                                seen.add(key);
+                                return true;
+                            })
+                            .map(el => {
+                                const lat = el.lat || el.center?.lat;
+                                const lon = el.lon || el.center?.lon;
+                                const tags = el.tags || {};
+                                const category = tags.tourism === "hotel" ? "Hotel" : tags.tourism === "hostel" ? "Hostel" : tags.tourism === "guest_house" ? "Guest House" : tags.tourism === "motel" ? "Motel" : tags.building === "dormitory" ? "Dormitory" : tags.building === "apartments" ? "Apartment" : tags.building === "hotel" ? "Hotel" : "Accommodation";
+                                const addrParts = [tags["addr:housename"], tags["addr:housenumber"], tags["addr:street"], tags["addr:suburb"] || tags["addr:neighbourhood"], tags["addr:city"], tags["addr:postcode"]].filter(Boolean);
+
+                                return {
+                                    _id: `osm-${el.id}`,
+                                    osmId: el.id,
+                                    title: tags.name || tags["name:en"] || `${category} near you`,
+                                    propertyType: tags.tourism === "hotel" ? "private-room" : tags.tourism === "hostel" ? "dorm" : "apartment",
+                                    category,
+                                    price: Math.floor(Math.random() * 15000) + 5000,
+                                    location: addrParts.length > 0 ? addrParts.join(", ") : "Nearby (Live Data)",
+                                    address: addrParts.length > 0 ? addrParts.join(", ") : null,
+                                    city: tags["addr:city"] || "Nearby",
+                                    images: ["https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=600"],
+                                    bedrooms: tags.rooms ? parseInt(tags.rooms) : 1,
+                                    bathrooms: 1,
+                                    isLive: true,
+                                    averageRating: tags.stars ? parseFloat(tags.stars) : Number((Math.random() * 2 + 3).toFixed(1)),
+                                    totalReviews: Math.floor(Math.random() * 100) + 1,
+                                    latitude: lat,
+                                    longitude: lon,
+                                    distance: getDistance(location.lat, location.lng, lat, lon),
+                                    // Real OSM metadata
+                                    phone: tags.phone || tags["contact:phone"] || null,
+                                    website: tags.website || tags["contact:website"] || null,
+                                    email: tags.email || tags["contact:email"] || null,
+                                    stars: tags.stars ? parseInt(tags.stars) : null,
+                                    rooms: tags.rooms ? parseInt(tags.rooms) : null,
+                                    operator: tags.operator || null,
+                                    openingHours: tags.opening_hours || null,
+                                    wheelchair: tags.wheelchair || null,
+                                    internetAccess: tags.internet_access || null,
+                                    checkIn: tags.check_in || null,
+                                    checkOut: tags.check_out || null,
+                                    description: tags.description || tags["description:en"] || null,
+                                };
+                            })
+                            .sort((a, b) => a.distance - b.distance)
+                            .slice(0, 30);
+
+                        let filteredLive = liveData;
+                        if (propertyType) filteredLive = filteredLive.filter(p => p.propertyType === propertyType);
+                        if (priceRange) {
+                            const [min, max] = priceRange.split("-");
+                            filteredLive = filteredLive.filter(p => p.price >= Number(min) && p.price <= (max === '999999' ? Infinity : Number(max)));
+                        }
+                        allData = [...allData, ...filteredLive];
+                    }
+                } catch (err) {
+                    console.warn("OSM fetch warning:", err);
                 }
             }
 
@@ -464,7 +522,7 @@ function Listings() {
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: i * 0.05, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
                                 >
-                                    <PropertyCard {...p} compact={viewMode === "list"} />
+                                    <PropertyCard {...p} compact={viewMode === "list"} onLiveClick={p.isLive ? () => setSelectedLive(p) : undefined} />
                                 </motion.div>
                             ))}
                         </AnimatePresence>
@@ -472,6 +530,152 @@ function Listings() {
                 )}
             </div>
             <Footer />
+
+            {/* ─── Live Property Detail Modal ─── */}
+            <AnimatePresence>
+                {selectedLive && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+                        onClick={() => setSelectedLive(null)}
+                    >
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 30 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 30 }}
+                            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border border-gray-100 dark:border-slate-700 max-h-[90vh] overflow-y-auto"
+                        >
+                            {/* Header */}
+                            <div className="bg-gradient-to-r from-emerald-500 to-teal-600 p-6 relative">
+                                <button onClick={() => setSelectedLive(null)} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/30 transition-colors">
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                </button>
+                                <div className="flex items-center gap-2 mb-3">
+                                    <span className="px-2 py-0.5 rounded-full bg-white/20 text-white text-xs font-bold flex items-center gap-1">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> Live Data
+                                    </span>
+                                    <span className="px-2 py-0.5 rounded-full bg-white/20 text-white text-xs font-bold">{selectedLive.category}</span>
+                                </div>
+                                <h3 className="text-xl font-bold text-white leading-tight">{selectedLive.title}</h3>
+                                {selectedLive.address && <p className="text-emerald-100 text-sm mt-1">{selectedLive.address}</p>}
+                            </div>
+
+                            {/* Body */}
+                            <div className="p-6 space-y-4">
+                                {/* Stats */}
+                                <div className="grid grid-cols-3 gap-3">
+                                    <div className="bg-gray-50 dark:bg-slate-800 rounded-xl p-3 text-center">
+                                        <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Distance</p>
+                                        <p className="text-base font-bold text-gray-800 dark:text-white mt-0.5">{selectedLive.distance?.toFixed(1)} km</p>
+                                    </div>
+                                    <div className="bg-gray-50 dark:bg-slate-800 rounded-xl p-3 text-center">
+                                        <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Type</p>
+                                        <p className="text-base font-bold text-gray-800 dark:text-white mt-0.5 capitalize">{selectedLive.category}</p>
+                                    </div>
+                                    {selectedLive.stars ? (
+                                        <div className="bg-gray-50 dark:bg-slate-800 rounded-xl p-3 text-center">
+                                            <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Rating</p>
+                                            <p className="text-base font-bold text-amber-500 mt-0.5">{"\u2605".repeat(selectedLive.stars)}</p>
+                                        </div>
+                                    ) : (
+                                        <div className="bg-gray-50 dark:bg-slate-800 rounded-xl p-3 text-center">
+                                            <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Source</p>
+                                            <p className="text-base font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">OSM</p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Details */}
+                                <div className="space-y-2.5">
+                                    {selectedLive.operator && (
+                                        <div className="flex items-center gap-3 py-2 border-b border-gray-100 dark:border-slate-800">
+                                            <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                                            <div><p className="text-xs text-gray-400">Operator</p><p className="text-sm font-semibold text-gray-800 dark:text-white">{selectedLive.operator}</p></div>
+                                        </div>
+                                    )}
+                                    {selectedLive.rooms && (
+                                        <div className="flex items-center gap-3 py-2 border-b border-gray-100 dark:border-slate-800">
+                                            <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+                                            <div><p className="text-xs text-gray-400">Rooms</p><p className="text-sm font-semibold text-gray-800 dark:text-white">{selectedLive.rooms}</p></div>
+                                        </div>
+                                    )}
+                                    {selectedLive.phone && (
+                                        <div className="flex items-center gap-3 py-2 border-b border-gray-100 dark:border-slate-800">
+                                            <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+                                            <div><p className="text-xs text-gray-400">Phone</p><a href={`tel:${selectedLive.phone}`} className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">{selectedLive.phone}</a></div>
+                                        </div>
+                                    )}
+                                    {selectedLive.email && (
+                                        <div className="flex items-center gap-3 py-2 border-b border-gray-100 dark:border-slate-800">
+                                            <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                                            <div><p className="text-xs text-gray-400">Email</p><a href={`mailto:${selectedLive.email}`} className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">{selectedLive.email}</a></div>
+                                        </div>
+                                    )}
+                                    {selectedLive.website && (
+                                        <div className="flex items-center gap-3 py-2 border-b border-gray-100 dark:border-slate-800">
+                                            <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" /></svg>
+                                            <div><p className="text-xs text-gray-400">Website</p><a href={selectedLive.website} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:underline truncate block max-w-[280px]">{selectedLive.website.replace(/^https?:\/\//, "").split("/")[0]}</a></div>
+                                        </div>
+                                    )}
+                                    {selectedLive.openingHours && (
+                                        <div className="flex items-center gap-3 py-2 border-b border-gray-100 dark:border-slate-800">
+                                            <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                            <div><p className="text-xs text-gray-400">Hours</p><p className="text-sm font-semibold text-gray-800 dark:text-white">{selectedLive.openingHours}</p></div>
+                                        </div>
+                                    )}
+                                    {(selectedLive.checkIn || selectedLive.checkOut) && (
+                                        <div className="flex items-center gap-3 py-2 border-b border-gray-100 dark:border-slate-800">
+                                            <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                            <div><p className="text-xs text-gray-400">Check-in / Check-out</p><p className="text-sm font-semibold text-gray-800 dark:text-white">{selectedLive.checkIn || "\u2014"} / {selectedLive.checkOut || "\u2014"}</p></div>
+                                        </div>
+                                    )}
+                                    {selectedLive.wheelchair && (
+                                        <div className="flex items-center gap-3 py-2 border-b border-gray-100 dark:border-slate-800">
+                                            <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
+                                            <div><p className="text-xs text-gray-400">Accessibility</p><p className="text-sm font-semibold text-gray-800 dark:text-white capitalize">{selectedLive.wheelchair} wheelchair access</p></div>
+                                        </div>
+                                    )}
+                                    {selectedLive.internetAccess && (
+                                        <div className="flex items-center gap-3 py-2 border-b border-gray-100 dark:border-slate-800">
+                                            <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.14 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" /></svg>
+                                            <div><p className="text-xs text-gray-400">Internet</p><p className="text-sm font-semibold text-gray-800 dark:text-white capitalize">{selectedLive.internetAccess}</p></div>
+                                        </div>
+                                    )}
+                                    {selectedLive.description && (
+                                        <div className="pt-2">
+                                            <p className="text-xs text-gray-400 mb-1">Description</p>
+                                            <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">{selectedLive.description}</p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Action Buttons */}
+                                <div className="flex gap-2 pt-2">
+                                    <a
+                                        href={`https://www.google.com/maps/dir/?api=1&destination=${selectedLive.latitude},${selectedLive.longitude}`}
+                                        target="_blank" rel="noopener noreferrer"
+                                        className="flex-1 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-sm font-bold text-center shadow-lg shadow-emerald-500/30 hover:shadow-xl transition-all"
+                                    >
+                                        Get Directions
+                                    </a>
+                                    <a
+                                        href={`https://www.openstreetmap.org/node/${selectedLive.osmId}`}
+                                        target="_blank" rel="noopener noreferrer"
+                                        className="px-5 py-3 rounded-xl border-2 border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-300 text-sm font-bold hover:bg-gray-50 dark:hover:bg-slate-800 transition-all"
+                                    >
+                                        View on OSM
+                                    </a>
+                                </div>
+                                <p className="text-[10px] text-gray-400 text-center">Data sourced from OpenStreetMap contributors under ODbL license.</p>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

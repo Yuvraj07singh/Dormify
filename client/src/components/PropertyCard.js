@@ -5,7 +5,7 @@ import { AuthContext } from "../context/AuthContext";
 import { LanguageContext } from "../context/LanguageContext";
 import { useCompare } from "../context/CompareContext";
 
-function PropertyCard({ _id, title, location, city, price, priceType, images, amenities, bedrooms, bathrooms, averageRating, totalReviews, propertyType, nearbyUniversity, furnished, distanceFromCampus, isLive, source }) {
+function PropertyCard({ _id, title, location, city, price, priceType, images, amenities, bedrooms, bathrooms, averageRating, totalReviews, propertyType, nearbyUniversity, furnished, distanceFromCampus, isLive, source, onLiveClick }) {
     const navigate = useNavigate();
     const { user, toggleSaveProperty } = useContext(AuthContext);
     const { t } = useContext(LanguageContext);
@@ -112,8 +112,8 @@ function PropertyCard({ _id, title, location, city, price, priceType, images, am
             ref={cardRef}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
-            className={`property-card spotlight-wrapper glass-panel interactive-card card-shine group ${isLive ? 'cursor-default ring-2 ring-emerald-500' : 'cursor-pointer'} ${inCompare ? 'ring-2 ring-indigo-500' : ''}`}
-            onClick={() => !isLive && navigate(`/property/${_id}`)}
+            className={`property-card spotlight-wrapper glass-panel interactive-card card-shine group ${isLive ? 'cursor-pointer ring-2 ring-emerald-500' : 'cursor-pointer'} ${inCompare ? 'ring-2 ring-indigo-500' : ''}`}
+            onClick={() => isLive ? (onLiveClick && onLiveClick()) : navigate(`/property/${_id}`)}
             style={{ transition: "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease" }}
         >
             {/* Holographic Shine Overlay */}
