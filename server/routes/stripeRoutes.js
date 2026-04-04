@@ -26,7 +26,7 @@ router.post("/create-checkout-session", authMiddleware, async (req, res) => {
                         product_data: {
                             name: `Booking for ${propertyTitle}`,
                         },
-                        unit_amount: totalAmount * 100, // Amount in paise
+                        unit_amount: Math.round(totalAmount * 100), // Amount in paise
                     },
                     quantity: 1,
                 },

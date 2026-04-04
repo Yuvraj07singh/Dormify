@@ -89,8 +89,18 @@ function PropertyDetail() {
             setBookingStatus("loading");
 
             // Calculate total amount
+            if (!bookingForm.moveInDate || !bookingForm.moveOutDate) {
+                toast.error("Please enter move-in and move-out dates.");
+                setBookingStatus("");
+                return;
+            }
             const start = new Date(bookingForm.moveInDate);
             const end = new Date(bookingForm.moveOutDate);
+            if (isNaN(start) || isNaN(end) || start >= end) {
+                toast.error("Invalid dates. Move-out must be after move-in.");
+                setBookingStatus("");
+                return;
+            }
             const months = Math.max(1, Math.ceil((end - start) / (1000 * 60 * 60 * 24 * 30)));
             const totalAmount = property.price * months;
 
