@@ -1,4 +1,4 @@
-const logger = require("./utils/logger");
+const logger = require("../utils/logger");
 
 // Global Async Error Handler — wraps any async route to prevent unhandled rejections
 const asyncHandler = (fn) => (req, res, next) => {
