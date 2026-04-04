@@ -26,7 +26,10 @@ const userSchema = new mongoose.Schema({
     savedProperties: [{ type: mongoose.Schema.Types.ObjectId, ref: "Property" }],
     // Password reset
     passwordResetToken: { type: String },
-    passwordResetExpires: { type: Date }
+    passwordResetExpires: { type: Date },
+    // Email verification
+    isEmailVerified: { type: Boolean, default: false },
+    emailVerificationToken: { type: String }
 }, { timestamps: true });
 
 module.exports = mongoose.model("User", userSchema);

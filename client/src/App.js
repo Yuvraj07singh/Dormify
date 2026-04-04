@@ -1,23 +1,30 @@
+import { Suspense, lazy } from "react";
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import Navbar from "./components/Navbar";
 import ToastProvider from "./components/ToastProvider";
-import Home from "./pages/Home";
-import Listings from "./pages/Listings";
-import Register from "./pages/Register";
-import Login from "./pages/Login";
-import PropertyDetail from "./pages/PropertyDetail";
-import Bookings from "./pages/Bookings";
-import Chat from "./pages/Chat";
-import Profile from "./pages/Profile";
-import AdminDashboard from "./pages/AdminDashboard";
-import LandlordBookings from "./pages/LandlordBookings";
-import ForgotPassword from "./pages/ForgotPassword";
-import ComparePage from "./pages/Compare";
-import Pricing from "./pages/Pricing";
-import BudgetAnalyzer from "./pages/BudgetAnalyzer";
-import RoommateFinder from "./pages/RoommateFinder";
 import { CompareProvider, useCompare } from "./context/CompareContext";
+import ErrorBoundary from "./components/ErrorBoundary";
+import SkeletonCard from "./components/SkeletonCard";
+
+// Lazy Loaded Pages
+const Home = lazy(() => import("./pages/Home"));
+const Listings = lazy(() => import("./pages/Listings"));
+const Register = lazy(() => import("./pages/Register"));
+const Login = lazy(() => import("./pages/Login"));
+const PropertyDetail = lazy(() => import("./pages/PropertyDetail"));
+const Bookings = lazy(() => import("./pages/Bookings"));
+const Chat = lazy(() => import("./pages/Chat"));
+const Profile = lazy(() => import("./pages/Profile"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const LandlordBookings = lazy(() => import("./pages/LandlordBookings"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ComparePage = lazy(() => import("./pages/Compare"));
+const Pricing = lazy(() => import("./pages/Pricing"));
+const BudgetAnalyzer = lazy(() => import("./pages/BudgetAnalyzer"));
+const RoommateFinder = lazy(() => import("./pages/RoommateFinder"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 
 function FloatingHomeButton() {
     const location = useLocation();
@@ -79,36 +86,49 @@ const PageTransition = ({ children }) => (
     </motion.div>
 );
 
+// Fallback loader for Suspense
+const PageLoader = () => (
+    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-slate-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+    </div>
+);
+
 function App() {
     return (
-        <CompareProvider>
-            <Router>
-                <ToastProvider />
-                <Navbar />
-                <CompareFloatingTray />
-                <FloatingHomeButton />
+        <ErrorBoundary>
+            <CompareProvider>
+                <Router>
+                    <ToastProvider />
+                    <Navbar />
+                    <CompareFloatingTray />
+                    <FloatingHomeButton />
 
-                <AnimatePresence mode="wait">
-                    <Routes>
-                        <Route path="/" element={<PageTransition><Home /></PageTransition>} />
-                        <Route path="/listings" element={<PageTransition><Listings /></PageTransition>} />
-                        <Route path="/register" element={<PageTransition><Register /></PageTransition>} />
-                        <Route path="/pricing" element={<PageTransition><Pricing /></PageTransition>} />
-                        <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
-                        <Route path="/forgot-password" element={<PageTransition><ForgotPassword /></PageTransition>} />
-                        <Route path="/property/:id" element={<PageTransition><PropertyDetail /></PageTransition>} />
-                        <Route path="/bookings" element={<PageTransition><Bookings /></PageTransition>} />
-                        <Route path="/landlord-bookings" element={<PageTransition><LandlordBookings /></PageTransition>} />
-                        <Route path="/chat" element={<PageTransition><Chat /></PageTransition>} />
-                        <Route path="/profile/:id" element={<PageTransition><Profile /></PageTransition>} />
-                        <Route path="/admin" element={<PageTransition><AdminDashboard /></PageTransition>} />
-                        <Route path="/compare" element={<PageTransition><ComparePage /></PageTransition>} />
-                        <Route path="/budget-analyzer" element={<PageTransition><BudgetAnalyzer /></PageTransition>} />
-                        <Route path="/roommate-finder" element={<PageTransition><RoommateFinder /></PageTransition>} />
-                    </Routes>
-                </AnimatePresence>
-            </Router>
-        </CompareProvider>
+                    <Suspense fallback={<PageLoader />}>
+                        <AnimatePresence mode="wait">
+                            <Routes>
+                                <Route path="/" element={<PageTransition><Home /></PageTransition>} />
+                                <Route path="/listings" element={<PageTransition><Listings /></PageTransition>} />
+                                <Route path="/register" element={<PageTransition><Register /></PageTransition>} />
+                                <Route path="/pricing" element={<PageTransition><Pricing /></PageTransition>} />
+                                <Route path="/verify-email/:token" element={<PageTransition><VerifyEmail /></PageTransition>} />
+                                <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
+                                <Route path="/forgot-password" element={<PageTransition><ForgotPassword /></PageTransition>} />
+                                <Route path="/reset-password/:token" element={<PageTransition><ResetPassword /></PageTransition>} />
+                                <Route path="/property/:id" element={<PageTransition><PropertyDetail /></PageTransition>} />
+                                <Route path="/bookings" element={<PageTransition><Bookings /></PageTransition>} />
+                                <Route path="/landlord-bookings" element={<PageTransition><LandlordBookings /></PageTransition>} />
+                                <Route path="/chat" element={<PageTransition><Chat /></PageTransition>} />
+                                <Route path="/profile/:id" element={<PageTransition><Profile /></PageTransition>} />
+                                <Route path="/admin" element={<PageTransition><AdminDashboard /></PageTransition>} />
+                                <Route path="/compare" element={<PageTransition><ComparePage /></PageTransition>} />
+                                <Route path="/budget-analyzer" element={<PageTransition><BudgetAnalyzer /></PageTransition>} />
+                                <Route path="/roommate-finder" element={<PageTransition><RoommateFinder /></PageTransition>} />
+                            </Routes>
+                        </AnimatePresence>
+                    </Suspense>
+                </Router>
+            </CompareProvider>
+        </ErrorBoundary>
     );
 }
 

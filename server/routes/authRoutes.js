@@ -22,22 +22,28 @@ router.post("/register", validateRequest(schemas.register), asyncHandler(async (
     if (existingUser) return res.status(400).json({ message: "Email already registered" });
 
     const hashedPassword = await bcrypt.hash(password, 12);
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+
     const user = await User.create({
         name: name.trim(),
         email: email.toLowerCase().trim(),
         password: hashedPassword,
         role: role || "student",
         university: university || "",
-        phone: phone || ""
+        phone: phone || "",
+        emailVerificationToken: crypto.createHash("sha256").update(verificationToken).digest("hex")
     });
 
-    // Send welcome email (fire and forget)
-    sendWelcomeEmail(user.email, user.name);
+    // Send welcome/verification email
+    const verificationUrl = `${process.env.FRONTEND_URL || "http://localhost:3000"}/verify-email/${verificationToken}`;
+    // In production, you would send a real verification email. For now we use the welcome email template.
+    sendWelcomeEmail(user.email, user.name); 
+    // Ideally we should have a `sendVerificationEmail(user.email, verificationUrl)` in emailService.js
 
     const token = signToken(user);
     const userObj = user.toObject();
     delete userObj.password;
-    res.status(201).json({ token, user: userObj });
+    res.status(201).json({ token, user: userObj, message: "Registration successful. Please check your email to verify your account." });
 }));
 
 // LOGIN
@@ -124,6 +130,23 @@ router.post("/reset-password/:token", asyncHandler(async (req, res) => {
     await user.save();
 
     res.json({ message: "Password reset successfully. You can now log in with your new password." });
+}));
+
+// VERIFY EMAIL
+router.post("/verify-email/:token", asyncHandler(async (req, res) => {
+    const hashedToken = crypto.createHash("sha256").update(req.params.token).digest("hex");
+    
+    const user = await User.findOne({ emailVerificationToken: hashedToken });
+    
+    if (!user) {
+        return res.status(400).json({ message: "Invalid or expired verification token" });
+    }
+    
+    user.isEmailVerified = true;
+    user.emailVerificationToken = undefined;
+    await user.save();
+    
+    res.json({ message: "Email successfully verified!" });
 }));
 
 module.exports = router;

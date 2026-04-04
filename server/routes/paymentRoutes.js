@@ -68,4 +68,43 @@ router.post("/verify", authMiddleware, async (req, res) => {
     }
 });
 
+// WEBHOOK HANDLER
+router.post("/webhook", async (req, res) => {
+    try {
+        const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+        if (!webhookSecret) {
+            console.error("Razorpay webhook secret missing");
+            return res.status(400).send("Webhook secret missing");
+        }
+
+        const signature = req.headers["x-razorpay-signature"];
+        const crypto = require("crypto");
+        
+        // req.body is a buffer here because of express.raw() in server.js
+        const expectedSignature = crypto
+            .createHmac("sha256", webhookSecret)
+            .update(req.body)
+            .digest("hex");
+
+        if (expectedSignature !== signature) {
+            console.error("Invalid webhook signature");
+            return res.status(400).send("Invalid signature");
+        }
+
+        const payload = JSON.parse(req.body.toString());
+        const event = payload.event;
+        
+        if (event === "payment.captured" || event === "order.paid") {
+            const paymentInfo = payload.payload.payment.entity;
+            console.log("PAYMENT CAPTURED/PAID via Webhook:", paymentInfo.id);
+            // Handle DB updates securely here (e.g., mark booking as paid)
+        }
+
+        res.status(200).send("Webhook received");
+    } catch (error) {
+        console.error("Webhook processing error:", error);
+        res.status(500).send("Webhook processing error");
+    }
+});
+
 module.exports = router;

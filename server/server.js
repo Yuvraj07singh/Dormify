@@ -8,6 +8,7 @@ const helmet = require("helmet");
 const morgan = require("morgan");
 const rateLimit = require("express-rate-limit");
 const { errorHandler } = require("./middleware/errorHandler");
+const logger = require("./utils/logger");
 
 dotenv.config();
 
@@ -33,7 +34,7 @@ app.use(cors({
         if (allowedOrigins.includes(normalizedOrigin)) {
             callback(null, true);
         } else {
-            console.error(`CORS blocked origin: ${origin}. Allowed: ${allowedOrigins.join(", ")}`);
+            logger.warn(`CORS blocked origin: ${origin}. Allowed: ${allowedOrigins.join(", ")}`);
             callback(new Error("Not allowed by CORS"));
         }
     },
@@ -46,6 +47,8 @@ if (process.env.NODE_ENV !== "test") {
 }
 
 // ─── Body Parsers ──────────────────────────────────────────────────
+// Webhook must be parsed as raw buffer for signature verification
+app.use("/api/payment/webhook", express.raw({ type: "application/json" }));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
@@ -99,7 +102,6 @@ app.use("/api/upload",   require("./routes/uploadRoutes"));
 app.use("/api/admin",        require("./routes/adminRoutes"));
 app.use("/api/inquiry",      require("./routes/inquiryRoutes"));
 app.use("/api/saved-search", require("./routes/savedSearchRoutes"));
-app.use("/api/stripe",       require("./routes/stripeRoutes"));
 app.use("/api/roommate",     require("./routes/roommateRoutes"));
 
 // ─── Health Check ──────────────────────────────────────────────────
@@ -121,9 +123,11 @@ app.use((req, res) => {
 app.use(errorHandler);
 
 // ─── Database ──────────────────────────────────────────────────────
-mongoose.connect(process.env.MONGO_URI)
-    .then(() => console.log("✅ MongoDB Connected"))
-    .catch((err) => console.log("❌ MongoDB Error:", err));
+if (process.env.NODE_ENV !== "test") {
+    mongoose.connect(process.env.MONGO_URI)
+        .then(() => logger.info("✅ MongoDB Connected"))
+        .catch((err) => logger.error("❌ MongoDB Error:", { error: err.message }));
+}
 
 // ─── Socket.io: Real-Time Chat ─────────────────────────────────────
 const Message = require("./models/Message");
@@ -167,4 +171,8 @@ io.on("connection", (socket) => {
 
 // ─── Server Start ──────────────────────────────────────────────────
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+if (process.env.NODE_ENV !== 'test') {
+    server.listen(PORT, () => logger.info(`🚀 Server running on port ${PORT}`));
+}
+
+module.exports = { app, server };

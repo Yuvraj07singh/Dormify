@@ -1,3 +1,5 @@
+const logger = require("./utils/logger");
+
 // Global Async Error Handler — wraps any async route to prevent unhandled rejections
 const asyncHandler = (fn) => (req, res, next) => {
     Promise.resolve(fn(req, res, next)).catch(next);
@@ -32,7 +34,16 @@ const errorHandler = (err, req, res, next) => {
         return res.status(401).json({ message: "Token expired, please log in again" });
     }
 
-    console.error(`[ERROR] ${err.message}`, err.stack);
+    // Multer Errors
+    if (err.name === "MulterError") {
+        if (err.code === "LIMIT_FILE_SIZE") {
+            return res.status(400).json({ message: "File too large. Maximum size is 5MB." });
+        }
+        return res.status(400).json({ message: err.message });
+    }
+
+    logger.error(`${err.message}`, { stack: err.stack });
+    
     res.status(statusCode).json({
         message: err.message || "Internal Server Error",
         ...(process.env.NODE_ENV === "development" && { stack: err.stack })

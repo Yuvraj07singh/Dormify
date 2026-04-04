@@ -388,6 +388,12 @@ const seedProperties = [
 ];
 
 router.post("/seed", async (req, res) => {
+    // SECURITY FIX: Protect seed route from unauthorized access
+    const seedSecret = req.header("X-Seed-Secret");
+    if (!seedSecret || seedSecret !== (process.env.SEED_SECRET || "dev-seed-secret")) {
+        return res.status(403).json({ message: "Forbidden: Invalid seed secret" });
+    }
+    
     try {
         // Create landlord accounts for different cities
         const landlordData = [
