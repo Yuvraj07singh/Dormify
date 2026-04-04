@@ -136,18 +136,19 @@ function Listings() {
             const dbList = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
             allData = [...dbList];
 
-            // 2. Fetch Live OSM Properties if Location is set
-            if (location) {
+            // 2. Fetch Live OSM Properties if Location is set or fallback to default
+            const targetLoc = location || { lat: 28.6139, lng: 77.2090 }; // Default to New Delhi if no location
+            if (targetLoc) {
                 try {
                     const query = `[out:json][timeout:25];
 (
-  nwr["tourism"="hotel"](around:10000,${location.lat},${location.lng});
-  nwr["tourism"="hostel"](around:10000,${location.lat},${location.lng});
-  nwr["tourism"="guest_house"](around:10000,${location.lat},${location.lng});
-  nwr["tourism"="motel"](around:10000,${location.lat},${location.lng});
-  nwr["building"="dormitory"](around:10000,${location.lat},${location.lng});
-  nwr["building"="apartments"](around:8000,${location.lat},${location.lng});
-  nwr["building"="hotel"](around:10000,${location.lat},${location.lng});
+  nwr["tourism"="hotel"](around:10000,${targetLoc.lat},${targetLoc.lng});
+  nwr["tourism"="hostel"](around:10000,${targetLoc.lat},${targetLoc.lng});
+  nwr["tourism"="guest_house"](around:10000,${targetLoc.lat},${targetLoc.lng});
+  nwr["tourism"="motel"](around:10000,${targetLoc.lat},${targetLoc.lng});
+  nwr["building"="dormitory"](around:10000,${targetLoc.lat},${targetLoc.lng});
+  nwr["building"="apartments"](around:8000,${targetLoc.lat},${targetLoc.lng});
+  nwr["building"="hotel"](around:10000,${targetLoc.lat},${targetLoc.lng});
 );
 out center 50;`;
 
@@ -195,7 +196,7 @@ out center 50;`;
                                     totalReviews: Math.floor(Math.random() * 100) + 1,
                                     latitude: lat,
                                     longitude: lon,
-                                    distance: getDistance(location.lat, location.lng, lat, lon),
+                                    distance: getDistance(targetLoc.lat, targetLoc.lng, lat, lon),
                                     // Real OSM metadata
                                     phone: tags.phone || tags["contact:phone"] || null,
                                     website: tags.website || tags["contact:website"] || null,
