@@ -12,6 +12,11 @@ const propertySchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    osmId: {
+        type: String,
+        unique: true,
+        sparse: true
+    },
     description: {
         type: String,
         required: true
@@ -123,7 +128,7 @@ const propertySchema = new mongoose.Schema({
     },
     source: {
         type: String,
-        enum: ["JustDial", "99acres", "MagicBricks", "Direct"],
+        enum: ["JustDial", "99acres", "MagicBricks", "Direct", "OSM"],
         default: "Direct"
     },
     contactNumber: {

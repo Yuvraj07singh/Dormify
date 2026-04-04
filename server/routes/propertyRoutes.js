@@ -15,6 +15,45 @@ const paginate = (page, limit) => {
     return { skip: (p - 1) * l, limit: l, page: p };
 };
 
+// CREATE DYNAMIC OSM PROPERTY
+router.post("/cache-live", asyncHandler(async (req, res) => {
+    const { osmId, title, propertyType, price, location, city, latitude, longitude, description, amenities, bedrooms, bathrooms } = req.body;
+    
+    if (!osmId) return res.status(400).json({ message: "osmId is required" });
+
+    // Check if it already exists
+    let existingProperty = await Property.findOne({ osmId });
+    
+    if (existingProperty) {
+        return res.json({ propertyId: existingProperty._id });
+    }
+
+    // Create new
+    const newProperty = await Property.create({
+        title: title || "Live Accommodation",
+        osmId,
+        propertyType: propertyType || "apartment",
+        price: price || 5000,
+        location: location || "Nearby",
+        city: city || "Unknown",
+        latitude: latitude || 0,
+        longitude: longitude || 0,
+        locationData: {
+            type: "Point",
+            coordinates: [longitude || 0, latitude || 0]
+        },
+        description: description || "Automatically discovered via OpenStreetMap live data integration.",
+        amenities: amenities || ["WiFi", "Security"],
+        bedrooms: bedrooms || 1,
+        bathrooms: bathrooms || 1,
+        source: "OSM",
+        isVerified: false,
+        images: ["https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=1200"]
+    });
+
+    res.json({ propertyId: newProperty._id });
+}));
+
 // GET ALL PROPERTIES (with filters + pagination + sort) - NOW CACHED 🔥
 router.get("/", cacheMiddleware, asyncHandler(async (req, res) => {
     const { city, minPrice, maxPrice, propertyType, university, furnished, search, lat, lng, radius, page, limit, sort } = req.query;
