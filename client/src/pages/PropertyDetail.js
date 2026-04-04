@@ -51,23 +51,36 @@ function PropertyDetail() {
             .then(res => { setProperty(res.data); setLoading(false); })
             .catch(() => setLoading(false));
 
-        // Instead of handling Stripe checkout redirects, we handle Razorpay payment success via handler in handleBooking
+        // Intercept Stripe Success Redirect
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get("success") === "true") {
+            const pendingParams = sessionStorage.getItem("stripe_pending_booking");
+            if (pendingParams) {
+                const bookingData = JSON.parse(pendingParams);
+                axios.post(`${API_URL}/api/booking/book`, {
+                    ...bookingData,
+                    paymentStatus: "completed",
+                    paymentId: urlParams.get("session_id"),
+                    orderId: urlParams.get("session_id")
+                }).then(() => {
+                    sessionStorage.removeItem("stripe_pending_booking");
+                    setBookingStatus("success");
+                    toast.success("🏠 Stripe Payment Verified & Booking Confirmed!");
+                    // Clean URL
+                    window.history.replaceState(null, "", `/property/${id}`);
+                }).catch(() => {
+                    toast.error("Failed to verify booking from Stripe.");
+                });
+            } else {
+                toast.success("Payment Received.");
+            }
+        }
     }, [id]);
 
     // Show skeleton while loading
     if (loading) return <PropertyDetailSkeleton />;
 
     const isSaved = user?.savedProperties?.includes(id);
-
-    const loadRazorpay = () => {
-        return new Promise((resolve) => {
-            const script = document.createElement("script");
-            script.src = "https://checkout.razorpay.com/v1/checkout.js";
-            script.onload = () => resolve(true);
-            script.onerror = () => resolve(false);
-            document.body.appendChild(script);
-        });
-    };
 
     const handleBooking = async (e) => {
         e.preventDefault();
@@ -81,73 +94,32 @@ function PropertyDetail() {
             const months = Math.max(1, Math.ceil((end - start) / (1000 * 60 * 60 * 24 * 30)));
             const totalAmount = property.price * months;
 
-            // Load Razorpay Script
-            const res = await loadRazorpay();
-            if (!res) {
-                toast.error("Razorpay SDK failed to load. Are you online?");
-                setBookingStatus("");
-                return;
-            }
+            // Cache the booking payload in Browser Session so it survives the Stripe Redirect
+            sessionStorage.setItem("stripe_pending_booking", JSON.stringify({
+                propertyId: id,
+                ...bookingForm
+            }));
 
-            // Create Order on Backend
-            const orderRes = await axios.post(`${API_URL}/api/payment/create-order`, { amount: totalAmount });
-
-            // Initialize Razorpay
-            const options = {
-                key: "rzp_test_YourTestKeyHere", // We will replace in production, fallback allowed here since backend actually validates
-                amount: orderRes.data.amount,
-                currency: "INR",
-                name: "Dormify",
-                description: `Booking for ${property.title}`,
-                order_id: orderRes.data.id,
-                handler: async function (response) {
-                    try {
-                        // Verify Payment Signature
-                        const verifyRes = await axios.post(`${API_URL}/api/payment/verify`, {
-                            razorpay_order_id: response.razorpay_order_id,
-                            razorpay_payment_id: response.razorpay_payment_id,
-                            razorpay_signature: response.razorpay_signature
-                        });
-
-                        if (verifyRes.data.success) {
-                            // Hit the formal Booking endpoint here.
-                            await axios.post(`${API_URL}/api/booking/book`, {
-                                propertyId: id,
-                                ...bookingForm,
-                                paymentStatus: "completed",
-                                paymentId: response.razorpay_payment_id,
-                                orderId: response.razorpay_order_id
-                            });
-                            
-                            setBookingStatus("success");
-                            toast.success("🏠 Payment successful! Booking Confirmed!");
-                        }
-                    } catch (err) {
-                        toast.error("Payment verification failed.");
-                        setBookingStatus("");
-                    }
-                },
-                prefill: {
-                    name: user.name,
-                    email: user.email,
-                },
-                theme: { color: "#4f46e5" }
-            };
-
-            const rzp = new window.Razorpay(options);
-            
-            rzp.on("payment.failed", function (response) {
-                toast.error(`Payment Failed! Reason: ${response.error.description}`);
-                setBookingStatus("");
+            // 1. Create fully live Stripe Checkout Session
+            const stripeRes = await axios.post(`${API_URL}/api/stripe/create-checkout-session`, {
+                propertyId: id,
+                propertyTitle: property.title,
+                totalAmount: totalAmount,
+                ...bookingForm
             });
 
-            rzp.open();
-            setBookingStatus("");
+            // 2. Bruteforce Redirect User securely to Stripe Hosted Payment Page!
+            window.location.href = stripeRes.data.url;
 
         } catch (err) {
             setBookingStatus("");
-            toast.error("Error initiating payment.");
-            console.error(err);
+            sessionStorage.removeItem("stripe_pending_booking");
+            // If the key is invalid or expired, we tell the user exactly what to do.
+            if (err.response?.data?.message?.includes("API Key") || err.response?.data?.message?.includes("Stripe")) {
+                toast.error("Stripe keys missing! Add STRIPE_SECRET_KEY to your server/.env file.", { duration: 6000 });
+            } else {
+                toast.error("Stripe Connection Error. Check your backend logs.");
+            }
         }
     };
 

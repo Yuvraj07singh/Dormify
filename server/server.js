@@ -48,7 +48,7 @@ if (process.env.NODE_ENV !== "test") {
 
 // ─── Body Parsers ──────────────────────────────────────────────────
 // Webhook must be parsed as raw buffer for signature verification
-app.use("/api/payment/webhook", express.raw({ type: "application/json" }));
+app.use("/api/stripe/webhook", express.raw({ type: "application/json" }));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
@@ -97,7 +97,7 @@ app.use("/api/booking",  require("./routes/bookingRoutes"));
 app.use("/api/seed",     require("./routes/seedRoutes"));
 app.use("/api/chat",     require("./routes/chatRoutes"));
 app.use("/api/user",     require("./routes/userRoutes"));
-app.use("/api/payment",  require("./routes/paymentRoutes"));
+app.use("/api/stripe",   require("./routes/stripeRoutes"));
 app.use("/api/upload",   require("./routes/uploadRoutes"));
 app.use("/api/admin",        require("./routes/adminRoutes"));
 app.use("/api/inquiry",      require("./routes/inquiryRoutes"));
