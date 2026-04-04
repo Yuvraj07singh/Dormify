@@ -17,7 +17,7 @@ const paginate = (page, limit) => {
 
 // CREATE DYNAMIC OSM PROPERTY
 router.post("/cache-live", asyncHandler(async (req, res) => {
-    const { osmId, title, propertyType, price, location, city, latitude, longitude, description, amenities, bedrooms, bathrooms } = req.body;
+    const { osmId, title, propertyType, price, location, city, latitude, longitude, description, amenities, bedrooms, bathrooms, phone, email, website, operator, openingHours } = req.body;
     
     if (!osmId) return res.status(400).json({ message: "osmId is required" });
 
@@ -27,6 +27,13 @@ router.post("/cache-live", asyncHandler(async (req, res) => {
     if (existingProperty) {
         return res.json({ propertyId: existingProperty._id });
     }
+
+    let dynamicDescription = description || "Automatically discovered via OpenStreetMap live data integration. This property has been found in your selected area.";
+    if (phone) dynamicDescription += `\n📞 Phone: ${phone}`;
+    if (email) dynamicDescription += `\n📧 Email: ${email}`;
+    if (website) dynamicDescription += `\n🌐 Website: ${website}`;
+    if (operator) dynamicDescription += `\n🏢 Operator: ${operator}`;
+    if (openingHours) dynamicDescription += `\n⏰ Opening Hours: ${openingHours}`;
 
     // Create new
     const newProperty = await Property.create({
@@ -42,7 +49,8 @@ router.post("/cache-live", asyncHandler(async (req, res) => {
             type: "Point",
             coordinates: [longitude || 0, latitude || 0]
         },
-        description: description || "Automatically discovered via OpenStreetMap live data integration.",
+        description: dynamicDescription,
+        contactNumber: phone || "",
         amenities: amenities || ["WiFi", "Security"],
         bedrooms: bedrooms || 1,
         bathrooms: bathrooms || 1,

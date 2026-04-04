@@ -137,7 +137,22 @@ function Listings() {
             allData = [...dbList];
 
             // 2. Fetch Live OSM Properties if Location is set or fallback to default
-            const targetLoc = location || { lat: 28.6139, lng: 77.2090 }; // Default to New Delhi if no location
+            let targetLoc = location; 
+
+            // If we have a Search Param, but no targetLoc, let's geocode the Search Param right now to find OSM properties!
+            if (search && (!targetLoc || (location && location.shortName && !location.shortName.toLowerCase().includes(search.toLowerCase())))) {
+                try {
+                    const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(search)}&limit=1`, { headers: { "Accept-Language": "en" } });
+                    const geoData = await geoRes.json();
+                    if (geoData && geoData.length > 0) {
+                        targetLoc = { lat: parseFloat(geoData[0].lat), lng: parseFloat(geoData[0].lon) };
+                    }
+                } catch(e) { console.error("Geocoding failed for search term", e); }
+            }
+            
+            // Final fallback to New Delhi
+            targetLoc = targetLoc || { lat: 28.6139, lng: 77.2090 };
+
             if (targetLoc) {
                 try {
                     const query = `[out:json][timeout:25];

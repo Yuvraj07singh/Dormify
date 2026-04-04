@@ -135,7 +135,11 @@ const schemas = {
             const start = new Date(body.moveInDate);
             const end = new Date(body.moveOutDate);
             if (start >= end) errors.push("Move-out date must be after move-in date");
-            if (start <= new Date()) errors.push("Move-in date must be a future date");
+            
+            // Allow today's date (reset time to start of day for accurate comparison)
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            if (start < today) errors.push("Move-in date cannot be in the past");
         }
         if (body.message) {
             const msgLen = validate.maxLength(body.message, 500, "Message");
