@@ -5,23 +5,23 @@ import { AuthContext } from "../context/AuthContext";
 import Footer from "../components/Footer";
 import API_URL from "../config/api";
 
-const TIPS = [
-    { icon: <svg className="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>, title: "Cook at home", desc: "Save ₹3,000–₹5,000/month vs eating out daily." },
-    { icon: <svg className="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>, title: "Use public transport", desc: "Living near a bus/metro stop cuts commute cost by 60%." },
-    { icon: <svg className="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>, title: "Share with a roommate", desc: "Split rent and utilities to halve your housing cost." },
-    { icon: <svg className="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" /></svg>, title: "Negotiate WiFi", desc: "Ask landlord to include WiFi in rent — saves ₹500–₹800/mo." },
-    { icon: <svg className="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>, title: "Monitor utilities", desc: "Furnished PGs include electricity — prioritize them." },
-    { icon: <svg className="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>, title: "Move off-peak", desc: "Moving Nov–Jan gets you 15–20% cheaper rents." },
-];
-
-const CITY_AVERAGES = {
+const FALLBACK_AVERAGES = {
     "Mumbai": 18000, "Delhi": 12000, "Bangalore": 14000, "Hyderabad": 11000,
     "Pune": 10000, "Chennai": 9000, "Kolkata": 8000, "Ahmedabad": 7000,
-    "Jaipur": 6000, "Lucknow": 5500, "Other": 8000
+    "Jaipur": 6000, "Lucknow": 5500, "Bhopal": 5000, "Other": 8000
 };
 
+const TIPS = [
+    { icon: "📚", title: "Cook at home", desc: "Save ₹3,000–₹5,000/month vs eating out daily." },
+    { icon: "🚌", title: "Use public transport", desc: "Living near a bus/metro stop cuts commute cost by 60%." },
+    { icon: "👥", title: "Share with a roommate", desc: "Split rent and utilities to halve your housing cost." },
+    { icon: "📶", title: "Negotiate WiFi", desc: "Ask landlord to include WiFi in rent — saves ₹500–₹800/mo." },
+    { icon: "⚡", title: "Monitor utilities", desc: "Furnished PGs include electricity — prioritize them." },
+    { icon: "📅", title: "Move off-peak", desc: "Moving Nov–Jan gets you 15–20% cheaper rents." },
+];
+
 // Animated radial gauge component
-function Gauge({ percent, color }) {
+function Gauge({ percent, color, label }) {
     const radius = 54;
     const circumference = 2 * Math.PI * radius;
     const offset = circumference - (percent / 100) * circumference;
@@ -41,7 +41,7 @@ function Gauge({ percent, color }) {
                 style={{ transformOrigin: "70px 70px", transform: "rotate(-90deg)" }}
             />
             <text x="70" y="65" textAnchor="middle" className="fill-gray-800 dark:fill-white" style={{ fontSize: "22px", fontWeight: "700", fill: color }}>{percent}%</text>
-            <text x="70" y="83" textAnchor="middle" style={{ fontSize: "10px", fill: "#6b7280" }}>Affordable</text>
+            <text x="70" y="83" textAnchor="middle" style={{ fontSize: "10px", fill: "#6b7280" }}>{label || "Affordable"}</text>
         </svg>
     );
 }
@@ -68,25 +68,93 @@ function Bar({ label, value, max, color, prefix = "₹" }) {
     );
 }
 
+// Pie chart for cost breakdown
+function CostPieChart({ segments }) {
+    const total = segments.reduce((s, seg) => s + seg.value, 0);
+    if (total === 0) return null;
+    let cumAngle = 0;
+
+    return (
+        <svg viewBox="0 0 200 200" className="w-40 h-40 mx-auto">
+            {segments.map((seg, i) => {
+                const pct = seg.value / total;
+                const startAngle = cumAngle;
+                const angle = pct * 360;
+                cumAngle += angle;
+
+                const startRad = (startAngle - 90) * Math.PI / 180;
+                const endRad = (startAngle + angle - 90) * Math.PI / 180;
+                const x1 = 100 + 80 * Math.cos(startRad);
+                const y1 = 100 + 80 * Math.sin(startRad);
+                const x2 = 100 + 80 * Math.cos(endRad);
+                const y2 = 100 + 80 * Math.sin(endRad);
+                const largeArc = angle > 180 ? 1 : 0;
+
+                return (
+                    <motion.path
+                        key={i}
+                        d={`M100,100 L${x1},${y1} A80,80 0 ${largeArc},1 ${x2},${y2} Z`}
+                        fill={seg.color}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: i * 0.15, duration: 0.5 }}
+                        stroke="#fff"
+                        strokeWidth="2"
+                    />
+                );
+            })}
+            <circle cx="100" cy="100" r="40" fill="white" className="dark:fill-slate-900" />
+            <text x="100" y="96" textAnchor="middle" className="fill-gray-800 dark:fill-white" style={{ fontSize: "14px", fontWeight: "800" }}>
+                ₹{total.toLocaleString("en-IN")}
+            </text>
+            <text x="100" y="112" textAnchor="middle" style={{ fontSize: "9px", fill: "#6b7280" }}>Total/month</text>
+        </svg>
+    );
+}
+
 function BudgetAnalyzer() {
     const { user } = useContext(AuthContext);
-    const [budget, setBudget] = useState("");
+    const [income, setIncome] = useState("");
+    const [utilities, setUtilities] = useState("2000");
+    const [food, setFood] = useState("4000");
+    const [transport, setTransport] = useState("1500");
     const [city, setCity] = useState("Bangalore");
     const [type, setType] = useState("");
     const [furnished, setFurnished] = useState(false);
     const [analyzed, setAnalyzed] = useState(false);
     const [loading, setLoading] = useState(false);
     const [results, setResults] = useState(null);
+    const [cityAverages, setCityAverages] = useState(FALLBACK_AVERAGES);
+    const [citiesLoading, setCitiesLoading] = useState(true);
+
+    // Fetch dynamic city averages on mount
+    useEffect(() => {
+        fetch(`${API_URL}/api/property/stats/city-averages`)
+            .then(res => res.json())
+            .then(data => {
+                if (data && Object.keys(data).length > 0) {
+                    const avgs = {};
+                    Object.entries(data).forEach(([name, info]) => {
+                        avgs[name] = info.avg;
+                    });
+                    // Merge with fallbacks for cities not in DB
+                    setCityAverages({ ...FALLBACK_AVERAGES, ...avgs });
+                }
+            })
+            .catch(() => {}) // silently use fallbacks
+            .finally(() => setCitiesLoading(false));
+    }, []);
+
+    const availableForRent = Math.max(0, Number(income) - Number(utilities) - Number(food) - Number(transport));
 
     const analyze = async () => {
-        if (!budget || isNaN(budget) || Number(budget) < 1000) return;
+        if (!income || isNaN(income) || Number(income) < 1000) return;
         setLoading(true);
 
-        const b = Number(budget);
-        const cityAvg = CITY_AVERAGES[city] || 8000;
+        const b = availableForRent;
+        const cityAvg = cityAverages[city] || 8000;
 
         try {
-            // Use server-side aggregation — no more pulling all properties to the browser
             const params = new URLSearchParams({ maxBudget: b, city });
             if (type) params.append("propertyType", type);
             if (furnished) params.append("furnished", "true");
@@ -98,13 +166,28 @@ function BudgetAnalyzer() {
             const savings = stats.avgPrice > 0 ? b - stats.avgPrice : 0;
             const maxBracketCount = Math.max(...(stats.brackets || []).map(bk => bk.count), 1);
 
-            // Suggestions based on real server data
+            // Security deposit estimate (2-3 months rent)
+            const avgRent = stats.avgPrice || cityAvg;
+            const securityDeposit = avgRent * 2;
+            const canAffordDeposit = Number(income) * 3 >= securityDeposit; // can they save for it in 3 months?
+
+            // 50/30/20 Rule Analysis
+            const totalIncome = Number(income);
+            const rule50 = Math.round(totalIncome * 0.5); // Needs (rent + utilities + food + transport)
+            const rule30 = Math.round(totalIncome * 0.3); // Wants
+            const rule20 = Math.round(totalIncome * 0.2); // Savings
+            const totalNeeds = b + Number(utilities) + Number(food) + Number(transport);
+            const needsOverflow = totalNeeds > rule50;
+
+            // Smart suggestions
             const suggestions = [];
-            if (b < cityAvg) suggestions.push({ type: "warning", text: `Your budget (₹${b.toLocaleString("en-IN")}) is ₹${(cityAvg - b).toLocaleString("en-IN")} below ${city}'s average rent of ₹${cityAvg.toLocaleString("en-IN")}/mo. Shared rooms or hostels are your best bet.` });
-            if (b >= cityAvg * 1.5) suggestions.push({ type: "success", text: `Strong budget! ₹${(b - cityAvg).toLocaleString("en-IN")} above the ${city} average — you can comfortably afford premium or private rooms.` });
-            if (stats.unlockAt2K > 0) suggestions.push({ type: "tip", text: `Increasing by just ₹2,000 unlocks ${stats.unlockAt2K} more listing${stats.unlockAt2K > 1 ? 's' : ''} on Dormify.` });
-            if (stats.affordableCount < 3 && stats.totalCount > 0) suggestions.push({ type: "warning", text: `Only ${stats.affordableCount} listing${stats.affordableCount !== 1 ? 's' : ''} match your budget. Try relaxing filters or bumping up by ₹3,000–₹5,000.` });
-            if (stats.avgPrice > 0 && savings > 0) suggestions.push({ type: "success", text: `The average affordable listing (₹${stats.avgPrice.toLocaleString("en-IN")}/mo) leaves you ₹${savings.toLocaleString("en-IN")} of breathing room — great for security deposits.` });
+            if (b < cityAvg) suggestions.push({ type: "warning", text: `Your available rent budget (₹${b.toLocaleString("en-IN")}) is ₹${(cityAvg - b).toLocaleString("en-IN")} below ${city}'s average rent of ₹${cityAvg.toLocaleString("en-IN")}/mo. Consider shared rooms or hostels.` });
+            if (b >= cityAvg * 1.5) suggestions.push({ type: "success", text: `Strong budget! ₹${(b - cityAvg).toLocaleString("en-IN")} above the ${city} average — you can afford premium or private rooms.` });
+            if (stats.unlockAt2K > 0) suggestions.push({ type: "tip", text: `Increasing rent budget by just ₹2,000 unlocks ${stats.unlockAt2K} more listing${stats.unlockAt2K > 1 ? 's' : ''}.` });
+            if (stats.affordableCount < 3 && stats.totalCount > 0) suggestions.push({ type: "warning", text: `Only ${stats.affordableCount} listing${stats.affordableCount !== 1 ? 's' : ''} match. Try relaxing filters or reducing other expenses.` });
+            if (!canAffordDeposit) suggestions.push({ type: "warning", text: `Security deposits in ${city} average ₹${securityDeposit.toLocaleString("en-IN")} (2 months rent). Start saving early!` });
+            if (needsOverflow) suggestions.push({ type: "tip", text: `Your essential expenses exceed 50% of income (50/30/20 rule). Consider cutting ₹${(totalNeeds - rule50).toLocaleString("en-IN")} from needs.` });
+            if (savings > 0) suggestions.push({ type: "success", text: `The average affordable listing (₹${stats.avgPrice.toLocaleString("en-IN")}/mo) leaves ₹${savings.toLocaleString("en-IN")} breathing room for deposits and emergencies.` });
 
             setResults({
                 affordPct: stats.affordPct,
@@ -116,11 +199,20 @@ function BudgetAnalyzer() {
                 topPicks: stats.topPicks || [],
                 suggestions,
                 b,
+                totalIncome,
                 city,
                 brackets: stats.brackets || [],
                 maxBracketCount,
                 unlockAt2K: stats.unlockAt2K,
                 unlockAt5K: stats.unlockAt5K,
+                securityDeposit,
+                canAffordDeposit,
+                rule50, rule30, rule20,
+                needsOverflow,
+                totalNeeds,
+                utilities: Number(utilities),
+                food: Number(food),
+                transport: Number(transport),
             });
             setAnalyzed(true);
         } catch (e) {
@@ -129,7 +221,7 @@ function BudgetAnalyzer() {
         setLoading(false);
     };
 
-    const reset = () => { setAnalyzed(false); setResults(null); setBudget(""); };
+    const reset = () => { setAnalyzed(false); setResults(null); };
 
     const gaugeColor = results?.affordPct >= 60 ? "#10b981" : results?.affordPct >= 30 ? "#f59e0b" : "#ef4444";
 
@@ -143,8 +235,8 @@ function BudgetAnalyzer() {
                             Smart <span className="gradient-text">Budget Analyzer</span>
                         </h1>
                         <p className="mt-4 text-base md:text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-                            Know exactly what you can afford before you search. Get a personalized breakdown,
-                            market comparison, and smart money-saving tips tailored for students.
+                            Enter your real monthly income and expenses. We'll calculate exactly what you can afford
+                            for rent and find matching properties — powered by live market data.
                         </p>
                     </motion.div>
                 </div>
@@ -154,49 +246,78 @@ function BudgetAnalyzer() {
                 <AnimatePresence mode="wait">
                     {!analyzed ? (
                         <motion.div key="form" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
-                            {/* Input Form */}
                             <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-xl p-6 md:p-10">
-                                <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-8">Enter your details</h2>
+                                <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-2">Your Monthly Finances</h2>
+                                <p className="text-sm text-gray-500 dark:text-gray-400 mb-8">We calculate your available rent from your real income minus essential expenses.</p>
 
                                 <div className="grid md:grid-cols-2 gap-6">
-                                    {/* Budget */}
+                                    {/* Monthly Income */}
                                     <div className="md:col-span-2">
-                                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Monthly Housing Budget (₹) *</label>
+                                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Monthly Income / Allowance (₹) *</label>
                                         <div className="relative">
                                             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-500 font-bold text-lg">₹</span>
                                             <input
                                                 type="number"
-                                                value={budget}
-                                                onChange={e => setBudget(e.target.value)}
-                                                placeholder="e.g. 12000"
+                                                value={income}
+                                                onChange={e => setIncome(e.target.value)}
+                                                placeholder="e.g. 25000"
                                                 className="w-full pl-10 pr-4 py-4 rounded-2xl bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-900 dark:text-white text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
                                             />
                                         </div>
-                                        {/* Quick select */}
                                         <div className="flex gap-2 mt-3 flex-wrap">
-                                            {[5000, 8000, 12000, 18000, 25000].map(v => (
-                                                <button key={v} onClick={() => setBudget(String(v))}
-                                                    className={`px-3 py-1.5 rounded-xl text-sm font-semibold transition-all ${budget === String(v) ? "bg-indigo-600 text-white" : "bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-500/10"}`}>
+                                            {[15000, 20000, 25000, 35000, 50000].map(v => (
+                                                <button key={v} onClick={() => setIncome(String(v))}
+                                                    className={`px-3 py-1.5 rounded-xl text-sm font-semibold transition-all ${income === String(v) ? "bg-indigo-600 text-white" : "bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-500/10"}`}>
                                                     ₹{v.toLocaleString("en-IN")}
                                                 </button>
                                             ))}
                                         </div>
                                     </div>
 
+                                    {/* Utilities */}
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">⚡ Utilities (Electricity, Water, WiFi)</label>
+                                        <div className="relative">
+                                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-amber-500 font-bold">₹</span>
+                                            <input type="number" value={utilities} onChange={e => setUtilities(e.target.value)} placeholder="2000"
+                                                className="w-full pl-10 pr-4 py-3.5 rounded-2xl bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-900 dark:text-white font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500/30" />
+                                        </div>
+                                    </div>
+
+                                    {/* Food */}
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">🍽️ Food / Groceries</label>
+                                        <div className="relative">
+                                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500 font-bold">₹</span>
+                                            <input type="number" value={food} onChange={e => setFood(e.target.value)} placeholder="4000"
+                                                className="w-full pl-10 pr-4 py-3.5 rounded-2xl bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-900 dark:text-white font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500/30" />
+                                        </div>
+                                    </div>
+
+                                    {/* Transport */}
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">🚌 Transport / Commute</label>
+                                        <div className="relative">
+                                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500 font-bold">₹</span>
+                                            <input type="number" value={transport} onChange={e => setTransport(e.target.value)} placeholder="1500"
+                                                className="w-full pl-10 pr-4 py-3.5 rounded-2xl bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-900 dark:text-white font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/30" />
+                                        </div>
+                                    </div>
+
                                     {/* City */}
                                     <div>
-                                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">City / Location</label>
+                                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">📍 City / Location</label>
                                         <select value={city} onChange={e => setCity(e.target.value)}
-                                            className="w-full px-4 py-4 rounded-2xl bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 font-medium">
-                                            {Object.keys(CITY_AVERAGES).map(c => <option key={c} value={c}>{c}</option>)}
+                                            className="w-full px-4 py-3.5 rounded-2xl bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 font-medium">
+                                            {Object.keys(cityAverages).map(c => <option key={c} value={c}>{c} {cityAverages[c] ? `(avg ₹${cityAverages[c].toLocaleString("en-IN")})` : ""}</option>)}
                                         </select>
                                     </div>
 
                                     {/* Property Type */}
                                     <div>
-                                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Preferred Type</label>
+                                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">🏠 Preferred Type</label>
                                         <select value={type} onChange={e => setType(e.target.value)}
-                                            className="w-full px-4 py-4 rounded-2xl bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 font-medium">
+                                            className="w-full px-4 py-3.5 rounded-2xl bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 font-medium">
                                             <option value="">Any Type</option>
                                             <option value="apartment">Apartment</option>
                                             <option value="studio">Studio</option>
@@ -215,15 +336,33 @@ function BudgetAnalyzer() {
                                             </div>
                                             <span className="font-semibold text-gray-700 dark:text-gray-300">Furnished only</span>
                                         </label>
-                                        <span className="text-xs text-gray-400">(Furnished places cost 20–30% more but are move-in ready)</span>
                                     </div>
                                 </div>
+
+                                {/* Available for Rent Preview */}
+                                {income && Number(income) > 0 && (
+                                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                                        className="mt-6 p-5 rounded-2xl bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-500/10 dark:to-purple-500/10 border border-indigo-100 dark:border-indigo-500/20">
+                                        <div className="flex items-center justify-between flex-wrap gap-2">
+                                            <div>
+                                                <p className="text-sm text-indigo-700 dark:text-indigo-300 font-medium">Available for Rent</p>
+                                                <p className="text-xs text-indigo-500 dark:text-indigo-400 mt-0.5">Income − Utilities − Food − Transport</p>
+                                            </div>
+                                            <p className={`text-2xl font-bold ${availableForRent > 0 ? "text-indigo-600 dark:text-indigo-400" : "text-red-500"}`}>
+                                                ₹{availableForRent.toLocaleString("en-IN")}/mo
+                                            </p>
+                                        </div>
+                                        {availableForRent <= 0 && (
+                                            <p className="text-xs text-red-500 font-bold mt-2">⚠️ Your expenses exceed your income. Reduce expenses to find affordable housing.</p>
+                                        )}
+                                    </motion.div>
+                                )}
 
                                 <motion.button
                                     whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.98 }}
                                     onClick={analyze}
-                                    disabled={loading || !budget}
+                                    disabled={loading || !income || availableForRent <= 0}
                                     className="mt-8 w-full py-4 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold text-lg shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
                                 >
                                     {loading ? (
@@ -232,7 +371,7 @@ function BudgetAnalyzer() {
                                             Analyzing your budget...
                                         </>
                                     ) : (
-                                        <>Analyze My Budget</>
+                                        <>Analyze My Budget →</>
                                     )}
                                 </motion.button>
                             </div>
@@ -240,9 +379,9 @@ function BudgetAnalyzer() {
                             {/* How it works */}
                             <div className="grid md:grid-cols-3 gap-4 mt-8">
                                 {[
-                                    { icon: <svg className="w-6 h-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>, title: "Market Comparison", desc: "See how your budget stacks up against city averages" },
-                                    { icon: <svg className="w-6 h-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>, title: "Affordability Score", desc: "Know what % of listings you can actually afford" },
-                                    { icon: <svg className="w-6 h-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>, title: "Smart Tips", desc: "Personalized money-saving recommendations just for students" },
+                                    { icon: "📊", title: "Real Market Data", desc: "City averages computed from actual Dormify listings" },
+                                    { icon: "🏠", title: "Total Cost Analysis", desc: "Rent + Utilities + Food + Transport = real monthly cost" },
+                                    { icon: "💡", title: "50/30/20 Rule", desc: "Industry-standard budgeting framework applied to your finances" },
                                 ].map((f, i) => (
                                     <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 + 0.3 }}
                                         className="bg-gray-50 dark:bg-slate-900/50 rounded-2xl p-5 border border-gray-100 dark:border-slate-800">
@@ -255,39 +394,48 @@ function BudgetAnalyzer() {
                         </motion.div>
                     ) : (
                         <motion.div key="results" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-6">
-                            {/* Header result bar */}
+                            {/* Header */}
                             <div className="flex items-center justify-between flex-wrap gap-3">
                                 <div>
                                     <h2 className="text-xl md:text-2xl font-bold text-gray-800 dark:text-white">
-                                        Budget Analysis for <span className="gradient-text">₹{Number(budget).toLocaleString("en-IN")}/mo</span>
+                                        Budget Analysis for <span className="gradient-text">₹{results.totalIncome.toLocaleString("en-IN")}/mo</span>
                                     </h2>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">in {city} · {type || "All Types"} · {furnished ? "Furnished" : "Any Furnishing"}</p>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                        Available for rent: <strong className="text-indigo-600 dark:text-indigo-400">₹{results.b.toLocaleString("en-IN")}</strong> · {city} · {type || "All Types"} · {furnished ? "Furnished" : "Any"}
+                                    </p>
                                 </div>
                                 <button onClick={reset} className="px-4 py-2 rounded-xl border border-gray-200 dark:border-slate-700 text-sm font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors">
                                     ← Recalculate
                                 </button>
                             </div>
 
-                            {/* Main stats row */}
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-                                {[
-                                    { label: "Affordable Listings", value: results.affordableCount, unit: "properties", color: "#6366f1" },
-                                    { label: "Avg. Affordable Price", value: results.avgPrice ? `₹${results.avgPrice.toLocaleString("en-IN")}` : "N/A", unit: "/month", color: "#10b981" },
-                                    { label: "vs City Average", value: results.vsCityAvg >= 0 ? `+₹${results.vsCityAvg.toLocaleString("en-IN")}` : `-₹${Math.abs(results.vsCityAvg).toLocaleString("en-IN")}`, unit: "above/below avg", color: results.vsCityAvg >= 0 ? "#10b981" : "#ef4444" },
-                                    { label: "Potential Monthly Savings", value: results.savings > 0 ? `₹${results.savings.toLocaleString("en-IN")}` : "₹0", unit: "if you pick avg price", color: "#f59e0b" },
-                                ].map((stat, i) => (
-                                    <motion.div key={i} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.07 }}
-                                        className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-gray-100 dark:border-slate-800 shadow-sm">
-                                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{stat.label}</p>
-                                        <p className="text-xl md:text-2xl font-bold" style={{ color: stat.color }}>{stat.value}</p>
-                                        <p className="text-[10px] text-gray-400 mt-0.5">{stat.unit}</p>
-                                    </motion.div>
-                                ))}
-                            </div>
-
-                            {/* Gauge + Price Distribution */}
+                            {/* Monthly Cost Breakdown + Affordability */}
                             <div className="grid md:grid-cols-2 gap-4">
-                                {/* Gauge */}
+                                {/* Cost Breakdown Pie */}
+                                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-sm p-6">
+                                    <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4">📊 Monthly Cost Breakdown</h3>
+                                    <CostPieChart segments={[
+                                        { label: "Rent (budget)", value: results.avgPrice || results.b, color: "#6366f1" },
+                                        { label: "Utilities", value: results.utilities, color: "#f59e0b" },
+                                        { label: "Food", value: results.food, color: "#10b981" },
+                                        { label: "Transport", value: results.transport, color: "#3b82f6" },
+                                    ]} />
+                                    <div className="grid grid-cols-2 gap-2 mt-4">
+                                        {[
+                                            { label: "Rent", value: results.avgPrice || results.b, color: "#6366f1" },
+                                            { label: "Utilities", value: results.utilities, color: "#f59e0b" },
+                                            { label: "Food", value: results.food, color: "#10b981" },
+                                            { label: "Transport", value: results.transport, color: "#3b82f6" },
+                                        ].map((s, i) => (
+                                            <div key={i} className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+                                                <span className="w-3 h-3 rounded-full shrink-0" style={{ background: s.color }} />
+                                                {s.label}: <strong className="text-gray-800 dark:text-white">₹{s.value.toLocaleString("en-IN")}</strong>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Affordability Gauge */}
                                 <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-sm p-6 flex flex-col items-center justify-center">
                                     <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4 self-start">Affordability Score</h3>
                                     <Gauge percent={results.affordPct} color={gaugeColor} />
@@ -302,54 +450,85 @@ function BudgetAnalyzer() {
                                         </div>
                                     )}
                                 </div>
+                            </div>
 
-                                {/* Real Price Distribution from actual listings */}
-                                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-sm p-6">
-                                    <div className="flex items-start justify-between mb-1">
-                                        <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300">Price Distribution</h3>
-                                        <span className="text-[10px] px-2 py-1 rounded-lg font-bold bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">✦ Real site data</span>
-                                    </div>
-                                    <p className="text-[11px] text-gray-400 mb-4">Number of listings in each ₹2,000 price band</p>
-                                    <div className="space-y-2">
-                                        {results.brackets.map((bk, i) => (
-                                            <div key={i} className="flex items-center gap-2">
-                                                <span className={`text-[10px] w-20 shrink-0 font-semibold ${ bk.isAffordable ? 'text-gray-600 dark:text-gray-300' : 'text-gray-400'}`}>
-                                                    ₹{(bk.low/1000).toFixed(0)}K–{(bk.high/1000).toFixed(0)}K
-                                                </span>
-                                                <div className="flex-1 h-6 bg-gray-100 dark:bg-slate-800 rounded-lg overflow-hidden relative">
-                                                    <motion.div
-                                                        initial={{ width: 0 }}
-                                                        animate={{ width: `${Math.round((bk.count / results.maxBracketCount) * 100)}%` }}
-                                                        transition={{ duration: 0.6, delay: i * 0.05 }}
-                                                        className={`h-full rounded-lg ${ bk.isAffordable ? 'bg-gradient-to-r from-indigo-500 to-purple-500' : 'bg-gray-300 dark:bg-slate-600'}`}
-                                                    />
-                                                    {/* Budget marker */}
-                                                    {bk.high > results.b && bk.low < results.b && (
-                                                        <div className="absolute top-0 bottom-0 flex items-center gap-1" style={{ left: `${((results.b - bk.low) / (bk.high - bk.low) * (bk.count / results.maxBracketCount) * 100)}%` }}>
-                                                            <div className="w-0.5 h-full bg-amber-500" />
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <span className={`text-[11px] w-6 text-right font-bold shrink-0 ${ bk.isAffordable ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400'}`}>
-                                                    {bk.count}
-                                                </span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <div className="flex items-center gap-4 mt-4 text-[10px] text-gray-400">
-                                        <span className="flex items-center gap-1"><span className="w-3 h-2 rounded bg-indigo-500 inline-block" /> Within budget</span>
-                                        <span className="flex items-center gap-1"><span className="w-3 h-2 rounded bg-gray-300 dark:bg-slate-600 inline-block" /> Above budget</span>
-                                    </div>
+                            {/* Stats Row */}
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+                                {[
+                                    { label: "Affordable Listings", value: results.affordableCount, unit: "properties", color: "#6366f1" },
+                                    { label: "Avg. Affordable Rent", value: results.avgPrice ? `₹${results.avgPrice.toLocaleString("en-IN")}` : "N/A", unit: "/month", color: "#10b981" },
+                                    { label: "vs City Average", value: results.vsCityAvg >= 0 ? `+₹${results.vsCityAvg.toLocaleString("en-IN")}` : `-₹${Math.abs(results.vsCityAvg).toLocaleString("en-IN")}`, unit: "above/below avg", color: results.vsCityAvg >= 0 ? "#10b981" : "#ef4444" },
+                                    { label: "Security Deposit Est.", value: `₹${results.securityDeposit.toLocaleString("en-IN")}`, unit: "~2 months rent", color: results.canAffordDeposit ? "#f59e0b" : "#ef4444" },
+                                ].map((stat, i) => (
+                                    <motion.div key={i} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.07 }}
+                                        className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-gray-100 dark:border-slate-800 shadow-sm">
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{stat.label}</p>
+                                        <p className="text-xl md:text-2xl font-bold" style={{ color: stat.color }}>{stat.value}</p>
+                                        <p className="text-[10px] text-gray-400 mt-0.5">{stat.unit}</p>
+                                    </motion.div>
+                                ))}
+                            </div>
+
+                            {/* 50/30/20 Rule */}
+                            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-sm p-6">
+                                <div className="flex items-center justify-between mb-5">
+                                    <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300">💡 50/30/20 Budgeting Rule</h3>
+                                    {results.needsOverflow && (
+                                        <span className="text-[10px] px-2 py-1 rounded-lg bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 font-bold">⚠️ Needs exceed 50%</span>
+                                    )}
+                                </div>
+                                <div className="space-y-3">
+                                    <Bar label="Needs (Rent + Utilities + Food + Transport)" value={results.totalNeeds} max={results.totalIncome} color={results.needsOverflow ? "#ef4444" : "#6366f1"} />
+                                    <Bar label="Recommended Needs (50%)" value={results.rule50} max={results.totalIncome} color="#94a3b8" />
+                                    <Bar label="Wants (30%)" value={results.rule30} max={results.totalIncome} color="#f59e0b" />
+                                    <Bar label="Savings (20%)" value={results.rule20} max={results.totalIncome} color="#10b981" />
+                                </div>
+                                <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">
+                                    The 50/30/20 rule suggests spending max 50% of income on needs, 30% on wants, and saving 20%.
+                                    Your essential needs are {results.needsOverflow ? <span className="text-red-500 font-bold">over budget</span> : <span className="text-emerald-500 font-bold">within budget</span>}.
+                                </p>
+                            </div>
+
+                            {/* Market Comparison */}
+                            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-sm p-6">
+                                <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-5">📈 {city} Market Comparison</h3>
+                                <div className="space-y-3">
+                                    <Bar label="Your Rent Budget" value={results.b} max={Math.max(results.b, results.cityAvg) * 1.2} color="#6366f1" />
+                                    <Bar label={`${city} Average`} value={results.cityAvg} max={Math.max(results.b, results.cityAvg) * 1.2} color="#94a3b8" />
+                                    {results.avgPrice > 0 && <Bar label="Avg. Affordable Listing" value={results.avgPrice} max={Math.max(results.b, results.cityAvg) * 1.2} color="#10b981" />}
                                 </div>
                             </div>
 
-                            {/* City Market Comparison */}
+                            {/* Price Distribution */}
                             <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-sm p-6">
-                                <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-5">📊 {city} Market Comparison</h3>
-                                <div className="space-y-3">
-                                    <Bar label="Your Budget" value={results.b} max={Math.max(results.b, results.cityAvg) * 1.2} color="#6366f1" />
-                                    <Bar label={`${city} Average`} value={results.cityAvg} max={Math.max(results.b, results.cityAvg) * 1.2} color="#94a3b8" />
-                                    {results.avgPrice > 0 && <Bar label="Avg. Affordable Listing" value={results.avgPrice} max={Math.max(results.b, results.cityAvg) * 1.2} color="#10b981" />}
+                                <div className="flex items-start justify-between mb-1">
+                                    <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300">Price Distribution</h3>
+                                    <span className="text-[10px] px-2 py-1 rounded-lg font-bold bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">✦ Real site data</span>
+                                </div>
+                                <p className="text-[11px] text-gray-400 mb-4">Number of listings in each ₹2,000 price band</p>
+                                <div className="space-y-2">
+                                    {results.brackets.map((bk, i) => (
+                                        <div key={i} className="flex items-center gap-2">
+                                            <span className={`text-[10px] w-20 shrink-0 font-semibold ${ bk.isAffordable ? 'text-gray-600 dark:text-gray-300' : 'text-gray-400'}`}>
+                                                ₹{(bk.low/1000).toFixed(0)}K–{(bk.high/1000).toFixed(0)}K
+                                            </span>
+                                            <div className="flex-1 h-6 bg-gray-100 dark:bg-slate-800 rounded-lg overflow-hidden">
+                                                <motion.div
+                                                    initial={{ width: 0 }}
+                                                    animate={{ width: `${Math.round((bk.count / results.maxBracketCount) * 100)}%` }}
+                                                    transition={{ duration: 0.6, delay: i * 0.05 }}
+                                                    className={`h-full rounded-lg ${ bk.isAffordable ? 'bg-gradient-to-r from-indigo-500 to-purple-500' : 'bg-gray-300 dark:bg-slate-600'}`}
+                                                />
+                                            </div>
+                                            <span className={`text-[11px] w-6 text-right font-bold shrink-0 ${ bk.isAffordable ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400'}`}>
+                                                {bk.count}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="flex items-center gap-4 mt-4 text-[10px] text-gray-400">
+                                    <span className="flex items-center gap-1"><span className="w-3 h-2 rounded bg-indigo-500 inline-block" /> Within budget</span>
+                                    <span className="flex items-center gap-1"><span className="w-3 h-2 rounded bg-gray-300 dark:bg-slate-600 inline-block" /> Above budget</span>
                                 </div>
                             </div>
 
@@ -364,16 +543,10 @@ function BudgetAnalyzer() {
                                                 s.type === "success" ? "bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-800 dark:text-emerald-300" :
                                                 "bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 text-indigo-800 dark:text-indigo-300"
                                             }`}>
-                                        <div className="shrink-0 pt-0.5">
-                                            {s.type === "warning" ? (
-                                                <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                                            ) : s.type === "success" ? (
-                                                <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                                            ) : (
-                                                <svg className="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                            )}
-                                        </div>
-                                        <p>{s.text}</p>
+                                            <div className="shrink-0 pt-0.5 text-lg">
+                                                {s.type === "warning" ? "⚠️" : s.type === "success" ? "✅" : "💡"}
+                                            </div>
+                                            <p>{s.text}</p>
                                         </motion.div>
                                     ))}
                                 </div>
@@ -383,8 +556,7 @@ function BudgetAnalyzer() {
                             {results.topPicks.length > 0 && (
                                 <div>
                                     <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
-                                        <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
-                                        Top Picks Within Your Budget
+                                        ✨ Top Picks Within Your Budget
                                     </h3>
                                     <div className="grid md:grid-cols-3 gap-4">
                                         {results.topPicks.map((p, i) => (
@@ -400,12 +572,11 @@ function BudgetAnalyzer() {
                                                         <div className="flex items-center justify-between mt-2">
                                                             <span className="text-indigo-600 dark:text-indigo-400 font-bold text-sm">₹{p.price?.toLocaleString("en-IN")}/mo</span>
                                                             <span className="text-xs font-semibold text-amber-500 flex items-center gap-1">
-                                                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                                                {p.averageRating || "New"}
+                                                                ⭐ {p.averageRating || "New"}
                                                             </span>
                                                         </div>
                                                         <div className="mt-2 text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
-                                                            Save ₹{(Number(budget) - p.price).toLocaleString("en-IN")}/mo vs budget
+                                                            Save ₹{(results.b - p.price).toLocaleString("en-IN")}/mo vs budget
                                                         </div>
                                                     </div>
                                                 </motion.div>
@@ -418,8 +589,7 @@ function BudgetAnalyzer() {
                             {/* Money Saving Tips */}
                             <div>
                                 <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
-                                    <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                    Student Money-Saving Tips
+                                    💰 Student Money-Saving Tips
                                 </h3>
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                                     {TIPS.map((tip, i) => (
@@ -439,7 +609,7 @@ function BudgetAnalyzer() {
                                     {results.affordableCount > 0 ? `${results.affordableCount} properties waiting for you!` : "Explore all listings"}
                                 </h3>
                                 <p className="text-indigo-100 text-sm mb-6">Browse verified properties that match your budget and preferences.</p>
-                                <Link to={`/listings?${type ? `propertyType=${type}&` : ""}${furnished ? "furnished=true&" : ""}maxPrice=${budget}`}
+                                <Link to={`/listings?${type ? `propertyType=${type}&` : ""}${furnished ? "furnished=true&" : ""}maxPrice=${results.b}`}
                                     className="inline-block px-8 py-3.5 rounded-2xl bg-white text-indigo-600 font-bold hover:bg-indigo-50 transition-colors shadow-lg">
                                     Browse Matching Listings →
                                 </Link>

@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
+import toast from "react-hot-toast";
 import API_URL from "../config/api";
 
 function Bookings() {
@@ -22,10 +23,38 @@ function Bookings() {
 
     const updateStatus = async (id, status) => {
         try {
-
             await axios.put(`${API_URL}/api/booking/${id}/status`, { status });
             setBookings(prev => prev.map(b => b._id === id ? { ...b, status } : b));
-        } catch (err) { console.error(err); }
+            toast.success(`Booking ${status}`);
+        } catch (err) { console.error(err); toast.error("Action failed"); }
+    };
+
+    const handleCancel = async (id) => {
+        if (!window.confirm("Are you sure you want to cancel this booking? This action cannot be undone.")) return;
+        try {
+            await axios.delete(`${API_URL}/api/booking/${id}`);
+            setBookings(prev => prev.filter(b => b._id !== id));
+            toast.success("Booking cancelled");
+        } catch (err) {
+            toast.error(err.response?.data?.message || "Cannot cancel this booking");
+        }
+    };
+
+    const downloadReceipt = async (bookingId) => {
+        try {
+            const res = await axios.get(`${API_URL}/api/booking/receipt/${bookingId}`, { responseType: "blob" });
+            const url = window.URL.createObjectURL(new Blob([res.data], { type: "text/html" }));
+            const link = document.createElement("a");
+            link.href = url;
+            link.setAttribute("download", `dormify-receipt-${bookingId}.html`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+            toast.success("Receipt downloaded!");
+        } catch {
+            toast.error("Failed to download receipt");
+        }
     };
 
     const statusColors = {
@@ -91,16 +120,32 @@ function Bookings() {
                                         </div>
                                         <div className="flex flex-wrap gap-6 mt-4 text-sm text-gray-600 dark:text-gray-400">
                                             <span>📅 {new Date(booking.moveInDate).toLocaleDateString()} → {new Date(booking.moveOutDate).toLocaleDateString()}</span>
-                                            <span className="font-semibold text-indigo-600 dark:text-indigo-400">💰 ${booking.totalAmount?.toLocaleString()}</span>
+                                            <span className="font-semibold text-indigo-600 dark:text-indigo-400">💰 ₹{booking.totalAmount?.toLocaleString("en-IN")}</span>
+                                            {booking.paymentStatus === "completed" && <span className="text-emerald-500 font-semibold">✅ Paid</span>}
                                         </div>
                                         {booking.message && <p className="mt-3 text-sm text-gray-500 dark:text-gray-400 italic">"{booking.message}"</p>}
-                                        {/* Landlord Actions */}
-                                        {user?.role === "landlord" && booking.status === "pending" && (
-                                            <div className="flex gap-3 mt-4">
-                                                <button onClick={() => updateStatus(booking._id, "confirmed")} className="px-4 py-2 rounded-xl bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-600 transition-colors">Confirm</button>
-                                                <button onClick={() => updateStatus(booking._id, "cancelled")} className="px-4 py-2 rounded-xl bg-red-500 text-white text-sm font-semibold hover:bg-red-600 transition-colors">Decline</button>
-                                            </div>
-                                        )}
+                                        
+                                        <div className="flex gap-3 mt-4 flex-wrap">
+                                            {/* Landlord Actions */}
+                                            {user?.role === "landlord" && booking.status === "pending" && (
+                                                <>
+                                                    <button onClick={() => updateStatus(booking._id, "confirmed")} className="px-4 py-2 rounded-xl bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-600 transition-colors">✅ Confirm</button>
+                                                    <button onClick={() => updateStatus(booking._id, "cancelled")} className="px-4 py-2 rounded-xl bg-red-500 text-white text-sm font-semibold hover:bg-red-600 transition-colors">✕ Decline</button>
+                                                </>
+                                            )}
+
+                                            {/* Tenant: Cancel pending bookings */}
+                                            {user?.role !== "landlord" && (booking.status === "pending") && (
+                                                <button onClick={() => handleCancel(booking._id)} className="px-4 py-2 rounded-xl border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 text-sm font-semibold hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors">Cancel Booking</button>
+                                            )}
+
+                                            {/* Download Receipt for confirmed/completed paid bookings */}
+                                            {booking.paymentStatus === "completed" && ["confirmed", "completed"].includes(booking.status) && (
+                                                <button onClick={() => downloadReceipt(booking._id)} className="px-4 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-sm font-semibold hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-colors flex items-center gap-1.5">
+                                                    📄 Download Receipt
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </motion.div>

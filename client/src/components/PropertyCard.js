@@ -222,8 +222,14 @@ function PropertyCard({ _id, title, location, city, price, priceType, images, am
                     transition={{ delay: 0.3 }}
                     className="absolute bottom-3 right-3 px-3 py-1.5 rounded-xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm shadow-lg"
                 >
-                    <span className="text-lg font-bold text-indigo-600 dark:text-indigo-400">₹{price?.toLocaleString("en-IN")}</span>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">/{priceType || "month"}</span>
+                    {price ? (
+                        <>
+                            <span className="text-lg font-bold text-indigo-600 dark:text-indigo-400">₹{price?.toLocaleString("en-IN")}</span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">/{priceType || "month"}</span>
+                        </>
+                    ) : (
+                        <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">Contact for Price</span>
+                    )}
                 </motion.div>
 
                 {/* Source Badge */}

@@ -16,7 +16,7 @@ const paginate = (page, limit) => {
 };
 
 // CREATE DYNAMIC OSM PROPERTY
-router.post("/cache-live", asyncHandler(async (req, res) => {
+router.post("/cache-live", authMiddleware, asyncHandler(async (req, res) => {
     const { osmId, title, propertyType, price, location, city, latitude, longitude, description, amenities, bedrooms, bathrooms, phone, email, website, operator, openingHours } = req.body;
     
     if (!osmId) return res.status(400).json({ message: "osmId is required" });
@@ -223,6 +223,37 @@ router.get("/stats/budget", asyncHandler(async (req, res) => {
         unlockAt2K,
         unlockAt5K,
     });
+}));
+
+// DYNAMIC CITY AVERAGES (from real DB data)
+router.get("/stats/city-averages", asyncHandler(async (req, res) => {
+    const cityAverages = await Property.aggregate([
+        { $match: { isAvailable: true, price: { $gt: 0 } } },
+        { $group: {
+            _id: { $toLower: "$city" },
+            avgPrice: { $avg: "$price" },
+            minPrice: { $min: "$price" },
+            maxPrice: { $max: "$price" },
+            count: { $sum: 1 }
+        }},
+        { $match: { count: { $gte: 1 } } },
+        { $sort: { count: -1 } },
+        { $limit: 20 }
+    ]);
+
+    // Convert to a clean map
+    const result = {};
+    cityAverages.forEach(c => {
+        const cityName = c._id.charAt(0).toUpperCase() + c._id.slice(1);
+        result[cityName] = {
+            avg: Math.round(c.avgPrice),
+            min: c.minPrice,
+            max: c.maxPrice,
+            count: c.count
+        };
+    });
+
+    res.json(result);
 }));
 
 // GET FEATURED PROPERTIES

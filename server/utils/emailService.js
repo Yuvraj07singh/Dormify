@@ -114,4 +114,31 @@ const sendChatNotification = (email, senderName, text) => sendEmail({
     `
 });
 
-module.exports = { sendWelcomeEmail, sendBookingConfirmation, sendPasswordResetEmail, sendChatNotification };
+module.exports = { sendWelcomeEmail, sendBookingConfirmation, sendPasswordResetEmail, sendChatNotification, sendNewBookingToLandlord };
+
+// Landlord Booking Notification Email
+function sendNewBookingToLandlord(landlordEmail, landlordName, tenantName, tenantEmail, propertyTitle, moveIn, moveOut, amount, status) {
+    return sendEmail({
+        to: landlordEmail,
+        subject: `New Booking Request for ${propertyTitle} 📅`,
+        html: `
+            <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:32px;background:#fafafa;border-radius:12px">
+                <h2 style="color:#6366f1">New Booking Request! 📅</h2>
+                <p style="color:#555;font-size:16px">Hello <strong>${landlordName}</strong>,</p>
+                <p style="color:#555;font-size:16px">A student has requested to book your property <strong>${propertyTitle}</strong>.</p>
+                <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin:20px 0">
+                    <p style="margin:4px 0;color:#333"><strong>Tenant:</strong> ${tenantName} (${tenantEmail})</p>
+                    <p style="margin:4px 0;color:#333"><strong>Move-in:</strong> ${new Date(moveIn).toDateString()}</p>
+                    <p style="margin:4px 0;color:#333"><strong>Move-out:</strong> ${new Date(moveOut).toDateString()}</p>
+                    <p style="margin:4px 0;color:#333"><strong>Amount:</strong> ₹${Number(amount).toLocaleString("en-IN")}</p>
+                    <p style="margin:4px 0;color:#333"><strong>Status:</strong> ${status}</p>
+                </div>
+                <a href="${process.env.FRONTEND_URL || "https://dormify-one.vercel.app"}/bookings"
+                   style="display:inline-block;padding:12px 24px;background:#6366f1;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold">
+                   View Booking →
+                </a>
+                <p style="margin-top:32px;color:#999;font-size:12px">Dormify — Premium Student Housing Platform</p>
+            </div>
+        `
+    });
+}

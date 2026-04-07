@@ -2,12 +2,19 @@ import { useEffect, useState, useContext, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
+import toast from "react-hot-toast";
 import PropertyCard from "../components/PropertyCard";
 import SkeletonCard from "../components/SkeletonCard";
 import Footer from "../components/Footer";
 import { LanguageContext } from "../context/LanguageContext";
 import { LocationContext } from "../context/LocationContext";
 import API_URL from "../config/api";
+
+const OVERPASS_MIRRORS = [
+    "https://overpass-api.de/api/interpreter",
+    "https://overpass.kumi.systems/api/interpreter",
+    "https://overpass.openstreetmap.ru/api/interpreter",
+];
 
 // Haversine formula
 const getDistance = (lat1, lon1, lat2, lon2) => {
@@ -167,11 +174,14 @@ function Listings() {
 );
 out center 50;`;
 
-                    let osmRes;
-                    try {
-                        osmRes = await axios.get(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`, { timeout: 15000 });
-                    } catch {
-                        osmRes = await axios.get(`https://overpass.kumi.systems/api/interpreter?data=${encodeURIComponent(query)}`, { timeout: 15000 });
+                    let osmRes = null;
+                    for (const mirror of OVERPASS_MIRRORS) {
+                        try {
+                            osmRes = await axios.get(`${mirror}?data=${encodeURIComponent(query)}`, { timeout: 15000 });
+                            if (osmRes?.data?.elements) break;
+                        } catch {
+                            continue; // try next mirror
+                        }
                     }
 
                     if (osmRes?.data?.elements) {
@@ -199,7 +209,8 @@ out center 50;`;
                                     title: tags.name || tags["name:en"] || `${category} near you`,
                                     propertyType: tags.tourism === "hotel" ? "private-room" : tags.tourism === "hostel" ? "dorm" : "apartment",
                                     category,
-                                    price: Math.floor(Math.random() * 15000) + 5000,
+                                    price: null, // No fake prices — real inquiry only
+                                    priceLabel: "Contact for Pricing",
                                     location: addrParts.length > 0 ? addrParts.join(", ") : "Nearby (Live Data)",
                                     address: addrParts.length > 0 ? addrParts.join(", ") : null,
                                     city: tags["addr:city"] || "Nearby",
@@ -207,8 +218,8 @@ out center 50;`;
                                     bedrooms: tags.rooms ? parseInt(tags.rooms) : 1,
                                     bathrooms: 1,
                                     isLive: true,
-                                    averageRating: tags.stars ? parseFloat(tags.stars) : Number((Math.random() * 2 + 3).toFixed(1)),
-                                    totalReviews: Math.floor(Math.random() * 100) + 1,
+                                    averageRating: tags.stars ? parseFloat(tags.stars) : null,
+                                    totalReviews: 0,
                                     latitude: lat,
                                     longitude: lon,
                                     distance: getDistance(targetLoc.lat, targetLoc.lng, lat, lon),
@@ -300,7 +311,12 @@ out center 50;`;
             }
         } catch (err) {
             toast.dismiss();
-            toast.error("Failed to connect to live property.");
+            if (err.response?.status === 401) {
+                toast.error("Please login to view live property details.");
+                navigate("/login");
+            } else {
+                toast.error("Failed to connect to live property.");
+            }
         }
     };
 

@@ -364,29 +364,66 @@ function PropertyDetail() {
                         {/* Right Sidebar - Booking */}
                         <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }} className="lg:col-span-1">
                             <div className="sticky top-28 space-y-6">
-                                <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 shadow-xl">
-                                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">{t("bookProperty")}</h3>
-                                    <form onSubmit={handleBooking} className="space-y-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("moveInDate")}</label>
-                                            <input type="date" value={bookingForm.moveInDate} onChange={e => setBookingForm({ ...bookingForm, moveInDate: e.target.value })} className="input-field" required />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("moveOutDate")}</label>
-                                            <input type="date" value={bookingForm.moveOutDate} onChange={e => setBookingForm({ ...bookingForm, moveOutDate: e.target.value })} className="input-field" required />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("messageOptional")}</label>
-                                            <textarea value={bookingForm.message} onChange={e => setBookingForm({ ...bookingForm, message: e.target.value })} placeholder={t("introduceSelf")}
-                                                className="input-field h-24 resize-none" />
-                                        </div>
-                                        <button type="submit" className="btn-primary w-full" disabled={bookingStatus === "loading" || bookingStatus === "Waiting for payment..."}>
-                                            {bookingStatus === "loading" ? t("booking") : bookingStatus === "Waiting for payment..." ? "Complete Payment in Popup..." : "💳 Pay & Confirm Booking"}
-                                        </button>
-                                        {bookingStatus === "success" && <p className="text-sm text-center text-emerald-500 font-medium">{t("bookingSent")}</p>}
-                                        {bookingStatus && bookingStatus !== "success" && bookingStatus !== "loading" && <p className="text-sm text-center text-red-500">{bookingStatus}</p>}
-                                    </form>
-                                </div>
+                                {/* Inquiry Format for OSM / Live vs Booking format for DB */}
+                                {(!property.owner && property.source === "OSM") ? (
+                                    <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 shadow-xl">
+                                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Send Inquiry</h3>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Contact the property management directly for availability and pricing.</p>
+                                        <form onSubmit={async (e) => {
+                                            e.preventDefault();
+                                            setInquiryStatus("loading");
+                                            try {
+                                                await axios.post(`${API_URL}/api/inquiry`, { ...inquiryForm, propertyId: id });
+                                                setInquiryStatus("success");
+                                                toast.success("Inquiry sent directly to property!");
+                                                setTimeout(() => setInquiryStatus(""), 3000);
+                                            } catch (err) {
+                                                setInquiryStatus("");
+                                                toast.error("Failed to send inquiry");
+                                            }
+                                        }} className="space-y-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Your Name</label>
+                                                <input type="text" value={inquiryForm.name} onChange={e => setInquiryForm({ ...inquiryForm, name: e.target.value })} className="input-field" required />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                                                <input type="email" value={inquiryForm.email} onChange={e => setInquiryForm({ ...inquiryForm, email: e.target.value })} className="input-field" required />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Message / Preferred Dates</label>
+                                                <textarea value={inquiryForm.message} onChange={e => setInquiryForm({ ...inquiryForm, message: e.target.value })} placeholder="I'm interested in renting this property..." className="input-field h-24 resize-none" required />
+                                            </div>
+                                            <button type="submit" className="w-full py-3 rounded-xl bg-indigo-600 text-white font-bold hover:bg-indigo-700 transition-colors" disabled={inquiryStatus === "loading"}>
+                                                {inquiryStatus === "loading" ? "Sending..." : inquiryStatus === "success" ? "✓ Sent!" : "Send Inquiry"}
+                                            </button>
+                                        </form>
+                                    </div>
+                                ) : (
+                                    <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 shadow-xl">
+                                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">{t("bookProperty")}</h3>
+                                        <form onSubmit={handleBooking} className="space-y-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("moveInDate")}</label>
+                                                <input type="date" value={bookingForm.moveInDate} onChange={e => setBookingForm({ ...bookingForm, moveInDate: e.target.value })} className="input-field" required />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("moveOutDate")}</label>
+                                                <input type="date" value={bookingForm.moveOutDate} onChange={e => setBookingForm({ ...bookingForm, moveOutDate: e.target.value })} className="input-field" required />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("messageOptional")}</label>
+                                                <textarea value={bookingForm.message} onChange={e => setBookingForm({ ...bookingForm, message: e.target.value })} placeholder={t("introduceSelf")}
+                                                    className="input-field h-24 resize-none" />
+                                            </div>
+                                            <button type="submit" className="btn-primary w-full" disabled={bookingStatus === "loading" || bookingStatus === "Waiting for payment..."}>
+                                                {bookingStatus === "loading" ? t("booking") : bookingStatus === "Waiting for payment..." ? "Complete Payment in Popup..." : "💳 Pay & Confirm Booking"}
+                                            </button>
+                                            {bookingStatus === "success" && <p className="text-sm text-center text-emerald-500 font-medium">{t("bookingSent")}</p>}
+                                            {bookingStatus && bookingStatus !== "success" && bookingStatus !== "loading" && <p className="text-sm text-center text-red-500">{bookingStatus}</p>}
+                                        </form>
+                                    </div>
+                                )}
 
                                 {/* Owner Info + Chat */}
                                 {property.owner && (
