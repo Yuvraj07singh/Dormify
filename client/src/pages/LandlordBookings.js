@@ -133,12 +133,37 @@ export default function LandlordDashboard() {
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState("all");
+    const [needsStripe, setNeedsStripe] = useState(false);
+    const [stripeLoading, setStripeLoading] = useState(false);
 
     useEffect(() => {
         if (!user) { navigate("/login"); return; }
         if (user.role !== "landlord" && user.role !== "admin") { navigate("/"); return; }
         load();
+        verifyStripe();
     }, [user]);
+
+    const verifyStripe = async () => {
+        if (user?.role === "landlord") {
+            try {
+                const res = await axios.get(`${API}/api/stripe/verify-stripe`);
+                setNeedsStripe(!res.data.chargesEnabled);
+            } catch (err) {
+                console.error("Stripe verify failed");
+            }
+        }
+    };
+
+    const handleStripeConnect = async () => {
+        setStripeLoading(true);
+        try {
+            const res = await axios.post(`${API}/api/stripe/onboard-landlord`);
+            window.location.href = res.data.url;
+        } catch (err) {
+            toast.error("Failed to connect Stripe.");
+            setStripeLoading(false);
+        }
+    };
 
     const load = async () => {
         setLoading(true);
@@ -172,6 +197,19 @@ export default function LandlordDashboard() {
                         <p className="text-gray-500 dark:text-gray-400 mt-2 text-sm md:text-base">Welcome back, {user?.name}. Here's your property overview.</p>
                     </div>
                 </div>
+
+                {needsStripe && (
+                    <div className="mb-8 p-6 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-3xl text-white shadow-xl flex flex-col md:flex-row gap-6 md:items-center justify-between">
+                        <div>
+                            <h3 className="text-xl font-bold flex items-center gap-2">⚠️ Payouts Disabled</h3>
+                            <p className="text-indigo-100 text-sm mt-1 max-w-xl">You must connect your bank account via Stripe to accept online bookings and receive payouts from students.</p>
+                        </div>
+                        <button onClick={handleStripeConnect} disabled={stripeLoading}
+                            className="shrink-0 px-6 py-3 bg-white text-indigo-600 rounded-xl font-bold shadow-lg hover:bg-gray-50 transition-colors disabled:opacity-50">
+                            {stripeLoading ? "Loading..." : "Connect Bank Account →"}
+                        </button>
+                    </div>
+                )}
 
                 {/* KPI Cards */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-10">

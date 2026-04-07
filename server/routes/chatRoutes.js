@@ -128,6 +128,18 @@ router.post("/:conversationId/message", authMiddleware, async (req, res) => {
         const populated = await Message.findById(message._id)
             .populate("sender", "name avatar role");
 
+        // Async Email Notification to the recipient
+        const recipientId = conversation.participants.find(p => p.toString() !== req.user.id.toString());
+        if (recipientId) {
+            const User = require("../models/User");
+            const { sendChatNotification } = require("../utils/emailService");
+            User.findById(recipientId).then(recipient => {
+                if (recipient && recipient.email) {
+                    sendChatNotification(recipient.email, populated.sender.name, req.body.text);
+                }
+            }).catch(() => {}); // Fire and forget
+        }
+
         res.status(201).json(populated);
     } catch (error) {
         res.status(500).json({ message: error.message });

@@ -50,6 +50,25 @@ router.put("/kyc", authMiddleware, async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 });
+router.put("/kyc/:id", authMiddleware, async (req, res) => {
+    try {
+        if (req.user.role !== "admin") return res.status(403).json({ message: "Admin only." });
+        
+        const { status, reason } = req.body;
+        if (!["verified", "rejected"].includes(status)) return res.status(400).json({ message: "Invalid status." });
+
+        const user = await User.findById(req.params.id);
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        user.kycStatus = status;
+        if (status === "rejected") user.kycRejectionReason = reason;
+
+        await user.save();
+        res.json({ message: `KYC ${status}` });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
 
 // GET PUBLIC PROFILE — placed AFTER /profile route
 router.get("/:id", async (req, res) => {

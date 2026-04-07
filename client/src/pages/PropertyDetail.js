@@ -44,6 +44,7 @@ function PropertyDetail() {
     const [inquiryOpen, setInquiryOpen] = useState(false);
     const [inquiryForm, setInquiryForm] = useState({ name: user?.name || "", email: user?.email || "", phone: "", message: "", moveInDate: "" });
     const [inquiryStatus, setInquiryStatus] = useState(""); // "", "loading", "success"
+    const [canReview, setCanReview] = useState(false);
 
     useEffect(() => {
 
@@ -66,16 +67,23 @@ function PropertyDetail() {
                     sessionStorage.removeItem("stripe_pending_booking");
                     setBookingStatus("success");
                     toast.success("🏠 Stripe Payment Verified & Booking Confirmed!");
-                    // Clean URL
-                    window.history.replaceState(null, "", `/property/${id}`);
-                }).catch(() => {
-                    toast.error("Failed to verify booking from Stripe.");
-                });
-            } else {
-                toast.success("Payment Received.");
+                        // Clean URL
+                        window.history.replaceState(null, "", `/property/${id}`);
+                    }).catch(() => {
+                        toast.error("Failed to verify booking from Stripe.");
+                    });
+                } else {
+                    toast.error("Payment Received but no pending booking found.");
+                }
             }
+
+        // Check if user can review
+        if (user) {
+            axios.get(`${API_URL}/api/property/${id}/can-review`)
+                .then(res => setCanReview(res.data.canReview))
+                .catch(() => setCanReview(false));
         }
-    }, [id]);
+    }, [id, user]);
 
     // Show skeleton while loading
     if (loading) return <PropertyDetailSkeleton />;
@@ -334,7 +342,7 @@ function PropertyDetail() {
                                 )) : (property.totalReviews > 0 ? <p className="text-gray-500 dark:text-gray-400">No detailed reviews available yet.</p> : <p className="text-gray-500 dark:text-gray-400">No reviews yet.</p>)}
 
                                 {/* Add Review */}
-                                {user && (
+                                {canReview && (
                                     <form onSubmit={handleReview} className="mt-6 p-6 rounded-2xl bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800">
                                         <h3 className="font-semibold text-gray-800 dark:text-white mb-4">{t("writeReview")}</h3>
                                         <div className="flex gap-2 mb-4">
@@ -421,6 +429,16 @@ function PropertyDetail() {
                                         >
                                             View Full Profile
                                         </button>
+                                    </div>
+                                )}
+                                
+                                {!property.owner && property.source === "OSM" && (
+                                    <div className="p-6 rounded-3xl bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/30">
+                                        <h3 className="text-lg font-bold text-amber-800 dark:text-amber-400 mb-2">📢 Public Directory Data</h3>
+                                        <p className="text-sm text-amber-700 dark:text-amber-500">
+                                            This property was automatically discovered via open directory data. The booking connects directly, but chat messaging is intentionally disabled as there is no designated platform landlord. 
+                                            See the description for direct contact info.
+                                        </p>
                                     </div>
                                 )}
                             </div>

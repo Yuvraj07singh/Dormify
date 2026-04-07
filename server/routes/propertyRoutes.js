@@ -254,6 +254,12 @@ router.post("/add", authMiddleware, validateRequest(schemas.addProperty), asyncH
         return res.status(403).json({ message: "Only landlords can add properties" });
     }
 
+    const User = require("../models/User");
+    const landlord = await User.findById(req.user.id);
+    if (landlord.role !== "admin" && landlord.kycStatus !== "verified") {
+        return res.status(403).json({ message: "Identity Verification Required. Please complete KYC via your Profile." });
+    }
+
     const property = await Property.create({
         ...req.body,
         owner: req.user.id,
@@ -304,6 +310,17 @@ router.post("/:id/review", authMiddleware, validateRequest(schemas.addReview), a
     const property = await Property.findById(req.params.id);
     if (!property) return res.status(404).json({ message: "Property not found" });
 
+    // Ensure the user actually booked and completed a stay here
+    const Booking = require("../models/Booking");
+    const hasStayed = await Booking.findOne({
+        user: req.user.id,
+        property: req.params.id,
+        status: { $in: ["confirmed", "completed"] },
+        paymentStatus: "completed"
+    });
+    
+    if (!hasStayed) return res.status(403).json({ message: "You can only review properties you have booked and paid for." });
+
     const alreadyReviewed = property.reviews.find(r => r.user.toString() === req.user.id);
     if (alreadyReviewed) return res.status(400).json({ message: "You have already reviewed this property" });
 
@@ -317,5 +334,25 @@ router.post("/:id/review", authMiddleware, validateRequest(schemas.addReview), a
     const updated = await Property.findById(req.params.id).populate("reviews.user", "name avatar");
     res.status(201).json(updated);
 }));
+
+// CHECK REVIEW ELIGIBILITY
+router.get("/:id/can-review", authMiddleware, asyncHandler(async (req, res) => {
+    const Booking = require("../models/Booking");
+    const property = await Property.findById(req.params.id);
+    if (!property) return res.json({ canReview: false });
+
+    const alreadyReviewed = property.reviews.some(r => r.user.toString() === req.user.id);
+    if (alreadyReviewed) return res.json({ canReview: false, reason: "already_reviewed" });
+
+    const hasStayed = await Booking.findOne({
+        user: req.user.id,
+        property: req.params.id,
+        status: { $in: ["confirmed", "completed"] },
+        paymentStatus: "completed"
+    });
+
+    res.json({ canReview: !!hasStayed });
+}));
+
 
 module.exports = router;

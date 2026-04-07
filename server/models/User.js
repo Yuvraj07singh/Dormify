@@ -14,6 +14,9 @@ const userSchema = new mongoose.Schema({
     avatar: { type: String, default: "" },
     bio: { type: String, default: "" },
     verifiedLandlord: { type: Boolean, default: false },
+    // Stripe Connect
+    stripeAccountId: { type: String, default: "" },
+    chargesEnabled: { type: Boolean, default: false },
     kycStatus: {
         type: String,
         enum: ["unverified", "pending", "verified", "rejected"],

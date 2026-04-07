@@ -94,4 +94,24 @@ const sendPasswordResetEmail = (email, resetUrl) => sendEmail({
     `
 });
 
-module.exports = { sendWelcomeEmail, sendBookingConfirmation, sendPasswordResetEmail };
+// Chat Notification Email
+const sendChatNotification = (email, senderName, text) => sendEmail({
+    to: email,
+    subject: `New Message from ${senderName} 💬`,
+    html: `
+        <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:32px;background:#fafafa;border-radius:12px">
+            <h2 style="color:#6366f1">You have a new message! 💬</h2>
+            <p style="color:#555;font-size:16px"><strong>${senderName}</strong> sent you a message regarding a property inquiry on Dormify:</p>
+            <div style="background:#fff;border-left:4px solid #6366f1;padding:16px;margin:20px 0;color:#333;font-style:italic">
+                "${text}"
+            </div>
+            <a href="${process.env.FRONTEND_URL || "https://dormify-one.vercel.app"}/chat"
+               style="display:inline-block;padding:12px 24px;background:#6366f1;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold">
+               Reply to Message →
+            </a>
+            <p style="margin-top:32px;color:#999;font-size:12px">Dormify — Premium Student Housing Platform</p>
+        </div>
+    `
+});
+
+module.exports = { sendWelcomeEmail, sendBookingConfirmation, sendPasswordResetEmail, sendChatNotification };
