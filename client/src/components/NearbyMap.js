@@ -1,4 +1,5 @@
 import { useState, useEffect, useContext, useRef } from "react";
+import { createPortal } from "react-dom";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -510,8 +511,9 @@ out center 50;`;
             </div>
 
             {/* ─── Live Property Detail Modal ─── */}
-            <AnimatePresence>
-                {selectedLive && (
+            {createPortal(
+                <AnimatePresence>
+                    {selectedLive && (
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -656,8 +658,10 @@ out center 50;`;
                             </div>
                         </motion.div>
                     </motion.div>
-                )}
-            </AnimatePresence>
+                    )}
+                </AnimatePresence>,
+                document.body
+            )}
         </section>
     );
 }
